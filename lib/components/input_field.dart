@@ -14,6 +14,7 @@ class InputField extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     return Column(
+      spacing: 4,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(

@@ -1,5 +1,8 @@
+import 'package:fazr/components/add_alert.dart';
+import 'package:fazr/components/button.dart';
 import 'package:fazr/components/custom_calendar.dart';
 import 'package:fazr/components/input_field.dart';
+import 'package:fazr/components/repeat_selector.dart';
 import 'package:fazr/components/time_selector.dart';
 import 'package:flutter/material.dart';
 
@@ -29,6 +32,7 @@ class Create extends StatelessWidget {
                 CustomCalendar(),
 
                 Column(
+                  spacing: 4,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
@@ -43,12 +47,43 @@ class Create extends StatelessWidget {
                     TimeSelector(),
                   ],
                 ),
+                Column(
+                  spacing: 4,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Need alert ?',
+                      style: TextStyle(
+                        color: colors.primary,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    AddAlert(),
+                  ],
+                ),
                 InputField(label: 'Title', hint: 'Enter the title'),
                 InputField(
                   label: 'Description',
                   hint: 'Enter the description',
                   maxlines: 5,
                 ),
+                Column(
+                  spacing: 4,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Repeat',
+                      style: TextStyle(
+                        color: colors.primary,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    RepeatSelector(),
+                  ],
+                ),
+                Button(label: 'Create Task', onTap: () {}, borderRadius: 12),
               ],
             ),
           ),

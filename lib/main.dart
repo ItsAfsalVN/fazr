@@ -1,5 +1,4 @@
 import 'package:fazr/screens/splash.dart';
-import 'package:fazr/screens/tabs/dashboard.dart';
 import 'package:flutter/material.dart';
 
 void main(List<String> args) {

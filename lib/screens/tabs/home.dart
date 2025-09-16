@@ -10,14 +10,12 @@ class Home extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final DateTime today = DateTime.now();
-    final DateTime todayMidnight = DateTime(today.year, today.month, today.day);
 
     return Scaffold(
       body: Padding(
         padding: const EdgeInsets.symmetric(vertical: 40.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          spacing: 16,
           children: [
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -31,61 +29,68 @@ class Home extends StatelessWidget {
               ),
             ),
             EasyDateTimeLine(
-              headerProps: EasyHeaderProps(showHeader: false),
-              initialDate: todayMidnight,
-              itemBuilder: (context, date, isSelected, onTap) {
-                final bool isToday =
-                    date.day == todayMidnight.day &&
-                    date.month == todayMidnight.month &&
-                    date.year == todayMidnight.year;
-
-                return InkWell(
-                  onTap: onTap,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? colors.primary
-                          : (isToday
-                                ? colors.primary.withAlpha(128)
-                                : Colors.white),
-                      border: Border.all(color: colors.primary),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Padding(
-                      padding: EdgeInsets.all(20),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            DateFormat('E').format(date).toUpperCase(),
-                            style: TextStyle(
-                              color: isSelected || isToday
-                                  ? Colors.white
-                                  : colors.primary,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 18,
-                            ),
-                          ),
-                          Text(
-                            date.day.toString(),
-                            style: TextStyle(
-                              height: .8,
-                              color: isSelected || isToday
-                                  ? Colors.white
-                                  : colors.primary,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 32,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+              initialDate: today,
+              dayProps: EasyDayProps(
+                height: 90,
+                dayStructure: DayStructure.dayStrDayNum,
+                inactiveDayStyle: DayStyle(
+                  dayNumStyle: TextStyle(
+                    color: colors.primary,
+                    fontSize: 32,
+                    fontWeight: FontWeight.w600,
                   ),
-                );
-              },
+                  dayStrStyle: TextStyle(
+                    color: colors.primary,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: colors.primary),
+                  ),
+                ),
+                activeDayStyle: DayStyle(
+                  dayNumStyle: TextStyle(
+                    color: Colors.white,
+                    fontSize: 32,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  dayStrStyle: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    color: colors.primary,
+                    border: Border.all(color: colors.primary),
+                  ),
+                ),
+                todayStyle: DayStyle(
+                  dayNumStyle: TextStyle(
+                    color: Colors.white,
+                    fontSize: 32,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  dayStrStyle: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  decoration: BoxDecoration(
+                    color: colors.primary.withValues(alpha: .7),
+                    border: Border.all(
+                      color: colors.primary.withValues(alpha: .7),
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+              headerProps: const EasyHeaderProps(showHeader: false),
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: CategorySelect(),
             ),
           ],
