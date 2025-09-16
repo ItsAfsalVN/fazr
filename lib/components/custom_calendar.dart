@@ -23,6 +23,26 @@ class _CustomCalendarState extends State<CustomCalendar> {
         borderRadius: BorderRadius.circular(20),
       ),
       child: TableCalendar(
+        headerStyle: HeaderStyle(
+          titleTextStyle: TextStyle(
+            color: colors.primary,
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+          ),
+          leftChevronIcon: Icon(
+            Icons.keyboard_arrow_left_rounded,
+            color: colors.primary,
+          ),
+          rightChevronIcon: Icon(
+            Icons.keyboard_arrow_right_rounded,
+            color: colors.primary,
+          ),
+          formatButtonDecoration: BoxDecoration(
+            border: Border.all(color: colors.primary),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          formatButtonTextStyle: TextStyle(color: colors.primary),
+        ),
         focusedDay: _focusedDay,
         firstDay: DateTime(2020, 1, 1),
         lastDay: DateTime(2030, 12, 31),
