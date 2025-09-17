@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 class CustomCalendar extends StatefulWidget {
-  const CustomCalendar({super.key});
+  final Function(DateTime)? onDateSelected;
+  final DateTime intialDateSelected;
+  const CustomCalendar({super.key, this.onDateSelected, required this.intialDateSelected});
 
   @override
   State<CustomCalendar> createState() => _CustomCalendarState();
@@ -13,6 +15,11 @@ class _CustomCalendarState extends State<CustomCalendar> {
   DateTime? _selectedDay;
   DateTime _focusedDay = DateTime.now();
 
+@override
+  void initState() {
+    super.initState();
+    _selectedDay = widget.intialDateSelected;
+  }
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
@@ -43,6 +50,7 @@ class _CustomCalendarState extends State<CustomCalendar> {
           ),
           formatButtonTextStyle: TextStyle(color: colors.primary),
         ),
+
         focusedDay: _focusedDay,
         firstDay: DateTime(2020, 1, 1),
         lastDay: DateTime(2030, 12, 31),
@@ -54,6 +62,9 @@ class _CustomCalendarState extends State<CustomCalendar> {
             _selectedDay = selectedDay;
             _focusedDay = focusedDay;
           });
+          if (widget.onDateSelected != null) {
+            widget.onDateSelected!(selectedDay);
+          }
         },
 
         calendarFormat: _calendarFormat,

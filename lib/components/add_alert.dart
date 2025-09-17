@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 class AddAlert extends StatefulWidget {
-  const AddAlert({super.key});
+  Function(bool)? onStartAlertSelected;
+  Function(bool)? onEndAlertSelected;
+  AddAlert({super.key, this.onStartAlertSelected, this.onEndAlertSelected});
 
   @override
   State<AddAlert> createState() => _AddAlertState();
@@ -43,9 +45,14 @@ class _AddAlertState extends State<AddAlert> {
                   Checkbox(
                     side: BorderSide(color: colors.primary, width: 2),
                     value: alarmAtStart,
-                    onChanged: (value) => setState(() {
-                      alarmAtStart = value!;
-                    }),
+                    onChanged: (value) {
+                      setState(() {
+                        alarmAtStart = value!;
+                      });
+                      if (widget.onStartAlertSelected != null) {
+                        widget.onStartAlertSelected!(value!);
+                      }
+                    },
                   ),
                 ],
               ),
@@ -78,9 +85,14 @@ class _AddAlertState extends State<AddAlert> {
                   Checkbox(
                     side: BorderSide(color: colors.primary, width: 2),
                     value: alarmAtEnd,
-                    onChanged: (value) => setState(() {
-                      alarmAtEnd = value!;
-                    }),
+                    onChanged: (value) {
+                      setState(() {
+                        alarmAtEnd = value!;
+                      });
+                      if (widget.onEndAlertSelected != null) {
+                        widget.onEndAlertSelected!(value!);
+                      }
+                    },
                   ),
                 ],
               ),

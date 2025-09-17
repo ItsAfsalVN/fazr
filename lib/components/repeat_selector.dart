@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
 class RepeatSelector extends StatefulWidget {
-  const RepeatSelector({super.key});
+  final Function(String)? onRepeatSelected;
+  const RepeatSelector({super.key, this.onRepeatSelected});
 
   @override
   State<RepeatSelector> createState() => _RepeatSelectorState();
@@ -9,7 +10,7 @@ class RepeatSelector extends StatefulWidget {
 
 class _RepeatSelectorState extends State<RepeatSelector> {
   final List<String> _repeats = ["Once", "Daily", "Weekly", "Monthly"];
-  String _selectedRepeat = "Once"; // Start with "Once" as the default selection
+  String _selectedRepeat = "Once";
 
   @override
   Widget build(BuildContext context) {
@@ -34,6 +35,9 @@ class _RepeatSelectorState extends State<RepeatSelector> {
                 setState(() {
                   _selectedRepeat = repeat;
                 });
+                if (widget.onRepeatSelected != null) {
+                  widget.onRepeatSelected!(repeat.toLowerCase());
+                }
               },
               child: Container(
                 width: 80,

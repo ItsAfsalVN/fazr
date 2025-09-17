@@ -1,20 +1,22 @@
 import 'package:flutter/material.dart';
 
 class TimeSelector extends StatefulWidget {
-  const TimeSelector({super.key});
+  final Function(TimeOfDay)? onStartTimeSelected;
+  final Function(TimeOfDay)? onEndTimeSelected;
+  const TimeSelector({
+    super.key,
+    this.onStartTimeSelected,
+    this.onEndTimeSelected,
+  });
 
   @override
   State<TimeSelector> createState() => _TimeSelectorState();
 }
 
 class _TimeSelectorState extends State<TimeSelector> {
-  TimeOfDay _startTime = TimeOfDay.now();
-  TimeOfDay _endTime = TimeOfDay(
-    hour: 17,
-    minute: 0,
-  ); // Changed to non-final so it can be updated
+  TimeOfDay _startTime = TimeOfDay(hour: 9, minute: 0);
+  TimeOfDay _endTime = TimeOfDay(hour: 17, minute: 0);
 
-  // Helper method to get 12-hour format
   int get12HourFormat(int hour) {
     if (hour == 0) return 12;
     if (hour > 12) return hour - 12;
@@ -27,7 +29,6 @@ class _TimeSelectorState extends State<TimeSelector> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        // START TIME SELECTOR
         InkWell(
           onTap: () async {
             final TimeOfDay? selectedTime = await showTimePicker(
@@ -38,6 +39,9 @@ class _TimeSelectorState extends State<TimeSelector> {
               setState(() {
                 _startTime = selectedTime;
               });
+              if (widget.onStartTimeSelected != null) {
+                widget.onEndTimeSelected!(selectedTime);
+              }
             }
           },
           child: Row(
@@ -106,7 +110,6 @@ class _TimeSelectorState extends State<TimeSelector> {
           ),
         ),
 
-        // SEPARATOR
         Center(
           child: Container(
             height: 4,
@@ -118,7 +121,6 @@ class _TimeSelectorState extends State<TimeSelector> {
           ),
         ),
 
-        // END TIME SELECTOR
         InkWell(
           onTap: () async {
             final TimeOfDay? selectedTime = await showTimePicker(
@@ -129,6 +131,9 @@ class _TimeSelectorState extends State<TimeSelector> {
               setState(() {
                 _endTime = selectedTime;
               });
+              if (widget.onEndTimeSelected != null) {
+                widget.onEndTimeSelected!(selectedTime);
+              }
             }
           },
           child: Row(

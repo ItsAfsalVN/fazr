@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 class InputField extends StatelessWidget {
+  final Function(String)? onChanged;
+  TextEditingController? controller;
   String label;
   String hint;
   final int? maxlines;
@@ -9,6 +11,8 @@ class InputField extends StatelessWidget {
     required this.label,
     this.maxlines,
     required this.hint,
+    this.controller,
+    this.onChanged
   });
   @override
   Widget build(BuildContext context) {
@@ -26,6 +30,8 @@ class InputField extends StatelessWidget {
           ),
         ),
         TextFormField(
+          onChanged: onChanged,
+          controller: controller,
           maxLines: maxlines,
           decoration: InputDecoration(
             filled: true,
