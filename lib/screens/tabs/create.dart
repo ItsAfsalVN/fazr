@@ -18,6 +18,25 @@ class Create extends StatefulWidget {
 
 class _CreateState extends State<Create> {
   bool isLoading = false;
+  // Create controllers for your input fields
+  late TextEditingController _titleController;
+  late TextEditingController _descriptionController;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize the controllers
+    _titleController = TextEditingController();
+    _descriptionController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    // Dispose the controllers when the widget is removed from the tree
+    _titleController.dispose();
+    _descriptionController.dispose();
+    super.dispose();
+  }
 
   void _selectStartDate(DateTime selectedDate) {
     context.read<TaskProvider>().setStartingDate(selectedDate);
@@ -36,27 +55,17 @@ class _CreateState extends State<Create> {
   }
 
   void _setAlertAtEnd(bool value) {
-    context.read<TaskProvider>().setAlertAtStart(value);
+    context.read<TaskProvider>().setAlertAtEnd(value);
   }
 
-  void _onTitleChanged(String value) {
-    context.read<TaskProvider>().setTitle(value);
-  }
-
-  void _onDescriptionChanged(String value) {
-    context.read<TaskProvider>().setDescription(value);
-  }
-
-  void _onRepeatChanged(String value) {
-    context.read<TaskProvider>().setRepeat(value);
-  }
-
-  void _createTask() {
+  void _createTask() async {
     setState(() {
       isLoading = true;
     });
     try {
-      context.read<TaskProvider>().createTask();
+      await context.read<TaskProvider>().createTask();
+      _titleController.clear();
+      _descriptionController.clear();
     } catch (error) {
       showSnackBar(context, SnackBarType.error, error.toString());
     } finally {
@@ -89,7 +98,6 @@ class _CreateState extends State<Create> {
                 onDateSelected: _selectStartDate,
                 intialDateSelected: DateTime.now(),
               ),
-
               Column(
                 spacing: 4,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -102,7 +110,6 @@ class _CreateState extends State<Create> {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-
                   TimeSelector(
                     onStartTimeSelected: _selectStartTime,
                     onEndTimeSelected: _selectEndTime,
@@ -127,16 +134,19 @@ class _CreateState extends State<Create> {
                   ),
                 ],
               ),
+              // Pass the controller to the InputField
               InputField(
+                controller: _titleController,
                 label: 'Title',
                 hint: 'Enter the title',
-                onChanged: _onTitleChanged,
+                onChanged: (value) => context.read<TaskProvider>().setTitle(value),
               ),
               InputField(
+                controller: _descriptionController,
                 label: 'Description',
                 hint: 'Enter the description',
                 maxlines: 5,
-                onChanged: _onDescriptionChanged,
+                onChanged: (value) => context.read<TaskProvider>().setDescription(value),
               ),
               Column(
                 spacing: 4,
@@ -150,7 +160,7 @@ class _CreateState extends State<Create> {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  RepeatSelector(onRepeatSelected: _onRepeatChanged),
+                  RepeatSelector(onRepeatSelected: (value) => context.read<TaskProvider>().setRepeat(value)),
                 ],
               ),
               Button(

@@ -85,7 +85,7 @@ class TaskProvider extends ChangeNotifier {
     };
   }
 
-  void createTask() async {
+  Future<void> createTask() async {
     final jsonTask = toJson(_temporaryTask);
 
     try {
