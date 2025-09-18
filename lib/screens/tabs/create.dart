@@ -5,6 +5,7 @@ import 'package:fazr/components/input_field.dart';
 import 'package:fazr/components/repeat_selector.dart';
 import 'package:fazr/components/time_selector.dart';
 import 'package:fazr/providers/task_provider.dart';
+import 'package:fazr/utils/show_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -16,6 +17,8 @@ class Create extends StatefulWidget {
 }
 
 class _CreateState extends State<Create> {
+  bool isLoading = false;
+
   void _selectStartDate(DateTime selectedDate) {
     context.read<TaskProvider>().setStartingDate(selectedDate);
   }
@@ -48,7 +51,20 @@ class _CreateState extends State<Create> {
     context.read<TaskProvider>().setRepeat(value);
   }
 
-  void _createTask() {}
+  void _createTask() {
+    setState(() {
+      isLoading = true;
+    });
+    try {
+      context.read<TaskProvider>().createTask();
+    } catch (error) {
+      showSnackBar(context, SnackBarType.error, error.toString());
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

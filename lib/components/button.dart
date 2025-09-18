@@ -4,11 +4,13 @@ class Button extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
   final double? borderRadius;
+  final bool isLoading;
   const Button({
     super.key,
     required this.label,
     required this.onTap,
     this.borderRadius,
+    this.isLoading = false,
   });
 
   @override
@@ -20,22 +22,22 @@ class Button extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           backgroundColor: colors.primary,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(
-              borderRadius ?? 100,
-            ),
+            borderRadius: BorderRadius.circular(borderRadius ?? 100),
           ),
         ),
-        onPressed: onTap,
+        onPressed: isLoading ? null : onTap,
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 12.0),
-          child: Text(
-            label,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
-              fontSize: 24,
-            ),
-          ),
+          child: isLoading
+              ? CircularProgressIndicator(color: Colors.white)
+              : Text(
+                  label,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 24,
+                  ),
+                ),
         ),
       ),
     );

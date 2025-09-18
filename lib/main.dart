@@ -1,9 +1,15 @@
+import 'package:fazr/firebase_options.dart';
 import 'package:fazr/providers/task_provider.dart';
 import 'package:fazr/screens/splash.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-void main(List<String> args) {
+void main(List<String> args) async{
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(App());
 }
 

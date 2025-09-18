@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "899615270275",
+    "project_id": "afsal-fazr-the-todo-app",
+    "storage_bucket": "afsal-fazr-the-todo-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:899615270275:android:6e9b699e7a89f9186642b6",
+        "android_client_info": {
+          "package_name": "com.example.fazr"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDTm_mPY9gmZLRzoSaYh62pzWwgAvN3KW0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

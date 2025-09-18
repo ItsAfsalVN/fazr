@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class TaskModel {
-  final String uid;
+  final String? uid;
   final String title;
   final String description;
   final DateTime startingDate;
@@ -12,7 +12,7 @@ class TaskModel {
   final String repeat;
 
   TaskModel({
-    required this.uid,
+    this.uid,
     required this.title,
     required this.description,
     required this.startingDate,

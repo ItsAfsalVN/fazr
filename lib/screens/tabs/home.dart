@@ -1,7 +1,6 @@
 import 'package:easy_date_timeline/easy_date_timeline.dart';
 import 'package:fazr/components/category_select.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 class Home extends StatelessWidget {
   Home({super.key});

@@ -1,10 +1,11 @@
 import 'package:fazr/models/task_model.dart';
 import 'package:flutter/material.dart';
+import '../services/database_services.dart'; // Ensure this path is correct
 
 class TaskProvider extends ChangeNotifier {
   List<TaskModel> _tasks = [];
   TaskModel _temporaryTask = TaskModel(
-    uid: '', 
+    uid: null,
     title: '',
     description: '',
     startingDate: DateTime.now(),
@@ -12,7 +13,7 @@ class TaskProvider extends ChangeNotifier {
     endTime: TimeOfDay.now(),
     alertAtStart: false,
     alertAtEnd: false,
-    repeat: "once"
+    repeat: "once",
   );
 
   String get title => _temporaryTask.title;
@@ -22,17 +23,18 @@ class TaskProvider extends ChangeNotifier {
   TimeOfDay get endTime => _temporaryTask.endTime;
   bool get alertAtStart => _temporaryTask.alertAtStart;
   bool get alertAtEnd => _temporaryTask.alertAtEnd;
+  String get repeat => _temporaryTask.repeat;
 
   void setTitle(String value) {
     _temporaryTask = _temporaryTask.copyWith(title: value);
     notifyListeners();
   }
-  
+
   void setDescription(String value) {
     _temporaryTask = _temporaryTask.copyWith(description: value);
     notifyListeners();
   }
-  
+
   void setStartingDate(DateTime? date) {
     if (date != null) {
       _temporaryTask = _temporaryTask.copyWith(startingDate: date);
@@ -64,9 +66,51 @@ class TaskProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setRepeat(String value){
+  void setRepeat(String value) {
     _temporaryTask = _temporaryTask.copyWith(repeat: value);
     notifyListeners();
+  }
+
+  Map<String, dynamic> toJson(TaskModel task) {
+    return {
+      'title': task.title,
+      'description': task.description,
+      'startingDate': task.startingDate.toIso8601String(),
+      'startTime': '${task.startTime.hour}:${task.startTime.minute}',
+      'endTime': '${task.endTime.hour}:${task.endTime.minute}',
+      'alertAtStart': task.alertAtStart,
+      'alertAtEnd': task.alertAtEnd,
+      'repeat': task.repeat,
+      'uid': task.uid,
+    };
+  }
+
+  void createTask() async {
+    final jsonTask = toJson(_temporaryTask);
+
+    try {
+      final taskId = await createTaskInFireStore(jsonTask);
+
+      final newTask = _temporaryTask.copyWith(uid: taskId);
+
+      _tasks.add(newTask);
+
+      _temporaryTask = TaskModel(
+        uid: null,
+        title: '',
+        description: '',
+        startingDate: DateTime.now(),
+        startTime: TimeOfDay.now(),
+        endTime: TimeOfDay.now(),
+        alertAtStart: false,
+        alertAtEnd: false,
+        repeat: "once",
+      );
+    } catch (e) {
+      print(e);
+    } finally {
+      notifyListeners();
+    }
   }
 
   List<TaskModel> get tasks => [..._tasks];
