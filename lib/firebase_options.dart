@@ -1,6 +1,6 @@
 import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
-import 'package:flutter/foundation.dart'
-    show defaultTargetPlatform, kIsWeb, TargetPlatform;
+import 'package:flutter/foundation.dart' show TargetPlatform, defaultTargetPlatform, kIsWeb;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
@@ -15,18 +15,10 @@ class DefaultFirebaseOptions {
           'DefaultFirebaseOptions have not been configured for ios - '
           'you can reconfigure this by running the FlutterFire CLI again.',
         );
-      case TargetPlatform.macOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for macos - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
       case TargetPlatform.windows:
         return windows;
       case TargetPlatform.linux:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for linux - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+      case TargetPlatform.macOS:
       default:
         throw UnsupportedError(
           'DefaultFirebaseOptions are not supported for this platform.',
@@ -34,31 +26,31 @@ class DefaultFirebaseOptions {
     }
   }
 
-  static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyCfdNbpbkps72YLqdoJpLEfF17k_UlLxMY',
-    appId: '1:899615270275:web:4918886136c2adce6642b6',
-    messagingSenderId: '899615270275',
-    projectId: 'afsal-fazr-the-todo-app',
-    authDomain: 'afsal-fazr-the-todo-app.firebaseapp.com',
-    storageBucket: 'afsal-fazr-the-todo-app.firebasestorage.app',
-    measurementId: 'G-0R1WE3852Z',
+  static FirebaseOptions web = FirebaseOptions(
+    apiKey: dotenv.env['WEB_API_KEY']!,
+    appId: dotenv.env['WEB_APP_ID']!,
+    messagingSenderId: dotenv.env['WEB_MESSAGING_SENDER_ID']!,
+    projectId: dotenv.env['WEB_PROJECT_ID']!,
+    authDomain: dotenv.env['WEB_AUTH_DOMAIN'],
+    storageBucket: dotenv.env['WEB_STORAGE_BUCKET'],
+    measurementId: dotenv.env['WEB_MEASUREMENT_ID'],
   );
 
-  static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyDTm_mPY9gmZLRzoSaYh62pzWwgAvN3KW0',
-    appId: '1:899615270275:android:6e9b699e7a89f9186642b6',
-    messagingSenderId: '899615270275',
-    projectId: 'afsal-fazr-the-todo-app',
-    storageBucket: 'afsal-fazr-the-todo-app.firebasestorage.app',
+  static FirebaseOptions android = FirebaseOptions(
+    apiKey: dotenv.env['ANDROID_API_KEY']!,
+    appId: dotenv.env['ANDROID_APP_ID']!,
+    messagingSenderId: dotenv.env['ANDROID_MESSAGING_SENDER_ID']!,
+    projectId: dotenv.env['ANDROID_PROJECT_ID']!,
+    storageBucket: dotenv.env['ANDROID_STORAGE_BUCKET'],
   );
 
-  static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyCfdNbpbkps72YLqdoJpLEfF17k_UlLxMY',
-    appId: '1:899615270275:web:b8d86a4a2e77e7636642b6',
-    messagingSenderId: '899615270275',
-    projectId: 'afsal-fazr-the-todo-app',
-    authDomain: 'afsal-fazr-the-todo-app.firebaseapp.com',
-    storageBucket: 'afsal-fazr-the-todo-app.firebasestorage.app',
-    measurementId: 'G-T5TDYTYQGM',
+  static FirebaseOptions windows = FirebaseOptions(
+    apiKey: dotenv.env['WINDOWS_API_KEY']!,
+    appId: dotenv.env['WINDOWS_APP_ID']!,
+    messagingSenderId: dotenv.env['WINDOWS_MESSAGING_SENDER_ID']!,
+    projectId: dotenv.env['WINDOWS_PROJECT_ID']!,
+    authDomain: dotenv.env['WINDOWS_AUTH_DOMAIN'],
+    storageBucket: dotenv.env['WINDOWS_STORAGE_BUCKET'],
+    measurementId: dotenv.env['WINDOWS_MEASUREMENT_ID'],
   );
 }
