@@ -29,7 +29,7 @@ class Button extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 12.0),
           child: isLoading
-              ? CircularProgressIndicator(color: Colors.white)
+              ? CircularProgressIndicator(color: colors.primary)
               : Text(
                   label,
                   style: const TextStyle(

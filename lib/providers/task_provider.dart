@@ -1,9 +1,11 @@
 import 'package:fazr/models/task_model.dart';
 import 'package:flutter/material.dart';
+import 'package:table_calendar/table_calendar.dart'; // Import this
 import '../services/database_services.dart'; // Ensure this path is correct
 
 class TaskProvider extends ChangeNotifier {
   List<TaskModel> _tasks = [];
+  
   TaskModel _temporaryTask = TaskModel(
     uid: null,
     title: '',
@@ -16,6 +18,8 @@ class TaskProvider extends ChangeNotifier {
     repeat: "once",
   );
 
+  CalendarFormat _calendarFormat = CalendarFormat.month;
+
   String get title => _temporaryTask.title;
   String get description => _temporaryTask.description;
   DateTime get startingDate => _temporaryTask.startingDate;
@@ -24,6 +28,8 @@ class TaskProvider extends ChangeNotifier {
   bool get alertAtStart => _temporaryTask.alertAtStart;
   bool get alertAtEnd => _temporaryTask.alertAtEnd;
   String get repeat => _temporaryTask.repeat;
+
+  CalendarFormat get calendarFormat => _calendarFormat;
 
   void setTitle(String value) {
     _temporaryTask = _temporaryTask.copyWith(title: value);
@@ -71,6 +77,11 @@ class TaskProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setCalendarFormat(CalendarFormat format) {
+    _calendarFormat = format;
+    notifyListeners();
+  }
+
   Map<String, dynamic> toJson(TaskModel task) {
     return {
       'title': task.title,
@@ -81,7 +92,6 @@ class TaskProvider extends ChangeNotifier {
       'alertAtStart': task.alertAtStart,
       'alertAtEnd': task.alertAtEnd,
       'repeat': task.repeat,
-      'uid': task.uid,
     };
   }
 
@@ -90,11 +100,8 @@ class TaskProvider extends ChangeNotifier {
 
     try {
       final taskId = await createTaskInFireStore(jsonTask);
-
       final newTask = _temporaryTask.copyWith(uid: taskId);
-
       _tasks.add(newTask);
-
       _temporaryTask = TaskModel(
         uid: null,
         title: '',

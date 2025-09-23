@@ -1,20 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/task_provider.dart';
 
-class RepeatSelector extends StatefulWidget {
-  final Function(String)? onRepeatSelected;
-  const RepeatSelector({super.key, this.onRepeatSelected});
-
-  @override
-  State<RepeatSelector> createState() => _RepeatSelectorState();
-}
-
-class _RepeatSelectorState extends State<RepeatSelector> {
+class RepeatSelector extends StatelessWidget {
   final List<String> _repeats = ["Once", "Daily", "Weekly", "Monthly"];
-  String _selectedRepeat = "Once";
+  RepeatSelector({super.key});
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    // Watch the TaskProvider for the current repeat value.
+    final selectedRepeat = context.watch<TaskProvider>().repeat;
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -26,18 +23,14 @@ class _RepeatSelectorState extends State<RepeatSelector> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: _repeats.map((repeat) {
-            final isSelected = _selectedRepeat == repeat;
+            final isSelected = selectedRepeat == repeat.toLowerCase();
             final backgroundColor = isSelected ? colors.primary : Colors.white;
             final textColor = isSelected ? Colors.white : colors.primary;
 
             return GestureDetector(
               onTap: () {
-                setState(() {
-                  _selectedRepeat = repeat;
-                });
-                if (widget.onRepeatSelected != null) {
-                  widget.onRepeatSelected!(repeat.toLowerCase());
-                }
+                // Update the provider state directly.
+                context.read<TaskProvider>().setRepeat(repeat.toLowerCase());
               },
               child: Container(
                 width: 80,

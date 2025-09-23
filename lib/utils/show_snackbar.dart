@@ -1,27 +1,23 @@
-
 import 'package:flutter/material.dart';
 
-enum SnackBarType {
-  success,
-  error,
-  info
-}
+enum SnackBarType { success, error, info }
 
 void showSnackBar(BuildContext context, SnackBarType type, String message) {
+  final colors = Theme.of(context).colorScheme;
   Color backgroundColor;
   IconData icon;
 
   switch (type) {
     case SnackBarType.success:
-      backgroundColor = Colors.green;
+      backgroundColor = colors.primary;
       icon = Icons.check_circle_outline;
       break;
     case SnackBarType.error:
-      backgroundColor = Colors.red;
+      backgroundColor = colors.error;
       icon = Icons.error_outline;
       break;
     case SnackBarType.info:
-      backgroundColor = Colors.blue;
+      backgroundColor = const Color.fromARGB(255, 193, 136, 36);
       icon = Icons.info_outline;
       break;
   }
@@ -36,7 +32,7 @@ void showSnackBar(BuildContext context, SnackBarType type, String message) {
             child: Text(
               message,
               style: const TextStyle(color: Colors.white),
-              overflow: TextOverflow.ellipsis, 
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],

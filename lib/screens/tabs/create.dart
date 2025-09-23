@@ -59,15 +59,39 @@ class _CreateState extends State<Create> {
   }
 
   void _createTask() async {
+    final taskProvider = context.read<TaskProvider>();
+
+    if (taskProvider.title.isEmpty || taskProvider.description.isEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        showSnackBar(
+          context,
+          SnackBarType.error,
+          'Title and description cannot be empty.',
+        );
+      });
+      return;
+    }
+
     setState(() {
       isLoading = true;
     });
+
     try {
-      await context.read<TaskProvider>().createTask();
+      await taskProvider.createTask();
       _titleController.clear();
       _descriptionController.clear();
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        showSnackBar(
+          context,
+          SnackBarType.success,
+          'Task created successfully!',
+        );
+      });
     } catch (error) {
-      showSnackBar(context, SnackBarType.error, error.toString());
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        showSnackBar(context, SnackBarType.error, error.toString());
+      });
     } finally {
       setState(() {
         isLoading = false;
@@ -94,10 +118,7 @@ class _CreateState extends State<Create> {
                   fontSize: 32,
                 ),
               ),
-              CustomCalendar(
-                onDateSelected: _selectStartDate,
-                intialDateSelected: DateTime.now(),
-              ),
+              CustomCalendar(),
               Column(
                 spacing: 4,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -110,10 +131,7 @@ class _CreateState extends State<Create> {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  TimeSelector(
-                    onStartTimeSelected: _selectStartTime,
-                    onEndTimeSelected: _selectEndTime,
-                  ),
+                  TimeSelector(),
                 ],
               ),
               Column(
@@ -128,10 +146,7 @@ class _CreateState extends State<Create> {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  AddAlert(
-                    onStartAlertSelected: _setAlertAtStart,
-                    onEndAlertSelected: _setAlertAtEnd,
-                  ),
+                  AddAlert(),
                 ],
               ),
               // Pass the controller to the InputField
@@ -139,14 +154,16 @@ class _CreateState extends State<Create> {
                 controller: _titleController,
                 label: 'Title',
                 hint: 'Enter the title',
-                onChanged: (value) => context.read<TaskProvider>().setTitle(value),
+                onChanged: (value) =>
+                    context.read<TaskProvider>().setTitle(value),
               ),
               InputField(
                 controller: _descriptionController,
                 label: 'Description',
                 hint: 'Enter the description',
                 maxlines: 5,
-                onChanged: (value) => context.read<TaskProvider>().setDescription(value),
+                onChanged: (value) =>
+                    context.read<TaskProvider>().setDescription(value),
               ),
               Column(
                 spacing: 4,
@@ -160,13 +177,14 @@ class _CreateState extends State<Create> {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  RepeatSelector(onRepeatSelected: (value) => context.read<TaskProvider>().setRepeat(value)),
+                  RepeatSelector(),
                 ],
               ),
               Button(
                 label: 'Create Task',
                 onTap: _createTask,
                 borderRadius: 12,
+                isLoading: isLoading,
               ),
             ],
           ),

@@ -1,23 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/task_provider.dart';
 
-class AddAlert extends StatefulWidget {
-  Function(bool)? onStartAlertSelected;
-  Function(bool)? onEndAlertSelected;
-  AddAlert({super.key, this.onStartAlertSelected, this.onEndAlertSelected});
-
-  @override
-  State<AddAlert> createState() => _AddAlertState();
-}
-
-class _AddAlertState extends State<AddAlert> {
-  bool alarmAtStart = false;
-  bool alarmAtEnd = false;
+class AddAlert extends StatelessWidget {
+  const AddAlert({super.key});
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final taskProvider = context.watch<TaskProvider>();
+
     return Row(
-      spacing: 12,
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
         Expanded(
@@ -28,14 +21,14 @@ class _AddAlertState extends State<AddAlert> {
               borderRadius: BorderRadius.circular(12),
             ),
             child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Row(
-                    spacing: 6,
                     children: [
                       Icon(Icons.alarm, color: colors.primary),
+                      const SizedBox(width: 6),
                       Text(
                         'At the start',
                         style: TextStyle(color: colors.primary),
@@ -44,14 +37,9 @@ class _AddAlertState extends State<AddAlert> {
                   ),
                   Checkbox(
                     side: BorderSide(color: colors.primary, width: 2),
-                    value: alarmAtStart,
+                    value: taskProvider.alertAtStart,
                     onChanged: (value) {
-                      setState(() {
-                        alarmAtStart = value!;
-                      });
-                      if (widget.onStartAlertSelected != null) {
-                        widget.onStartAlertSelected!(value!);
-                      }
+                      context.read<TaskProvider>().setAlertAtStart(value!);
                     },
                   ),
                 ],
@@ -59,6 +47,7 @@ class _AddAlertState extends State<AddAlert> {
             ),
           ),
         ),
+        const SizedBox(width: 12),
         Expanded(
           child: Container(
             decoration: BoxDecoration(
@@ -67,15 +56,14 @@ class _AddAlertState extends State<AddAlert> {
               borderRadius: BorderRadius.circular(12),
             ),
             child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-
                 children: [
                   Row(
-                    spacing: 6,
                     children: [
                       Icon(Icons.alarm, color: colors.primary),
+                      const SizedBox(width: 6),
                       Text(
                         'At the end',
                         style: TextStyle(color: colors.primary),
@@ -84,14 +72,9 @@ class _AddAlertState extends State<AddAlert> {
                   ),
                   Checkbox(
                     side: BorderSide(color: colors.primary, width: 2),
-                    value: alarmAtEnd,
+                    value: taskProvider.alertAtEnd,
                     onChanged: (value) {
-                      setState(() {
-                        alarmAtEnd = value!;
-                      });
-                      if (widget.onEndAlertSelected != null) {
-                        widget.onEndAlertSelected!(value!);
-                      }
+                      context.read<TaskProvider>().setAlertAtEnd(value!);
                     },
                   ),
                 ],

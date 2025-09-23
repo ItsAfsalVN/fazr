@@ -1,28 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:provider/provider.dart';
+import '../providers/task_provider.dart';
 
-class CustomCalendar extends StatefulWidget {
-  final Function(DateTime)? onDateSelected;
-  final DateTime intialDateSelected;
-  const CustomCalendar({super.key, this.onDateSelected, required this.intialDateSelected});
+class CustomCalendar extends StatelessWidget {
+  const CustomCalendar({super.key});
 
-  @override
-  State<CustomCalendar> createState() => _CustomCalendarState();
-}
-
-class _CustomCalendarState extends State<CustomCalendar> {
-  CalendarFormat _calendarFormat = CalendarFormat.month;
-  DateTime? _selectedDay;
-  DateTime _focusedDay = DateTime.now();
-
-@override
-  void initState() {
-    super.initState();
-    _selectedDay = widget.intialDateSelected;
-  }
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final taskProvider = context.watch<TaskProvider>();
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -51,32 +39,33 @@ class _CustomCalendarState extends State<CustomCalendar> {
           formatButtonTextStyle: TextStyle(color: colors.primary),
         ),
 
-        focusedDay: _focusedDay,
+        focusedDay: taskProvider.startingDate,
         firstDay: DateTime(2020, 1, 1),
         lastDay: DateTime(2030, 12, 31),
 
-        selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+        selectedDayPredicate: (day) =>
+            isSameDay(taskProvider.startingDate, day),
 
         onDaySelected: (selectedDay, focusedDay) {
-          setState(() {
-            _selectedDay = selectedDay;
-            _focusedDay = focusedDay;
-          });
-          if (widget.onDateSelected != null) {
-            widget.onDateSelected!(selectedDay);
+          final now = DateTime.now();
+          final today = DateTime(now.year, now.month, now.day);
+          if (selectedDay.isBefore(today)) {
+            // Optional: Show a message to the user
+            return;
           }
+
+          context.read<TaskProvider>().setStartingDate(selectedDay);
         },
 
-        calendarFormat: _calendarFormat,
-
-        availableCalendarFormats: {
+        calendarFormat: taskProvider.calendarFormat,
+        availableCalendarFormats: const {
           CalendarFormat.month: 'Month',
           CalendarFormat.week: 'Week',
         },
-
-        onFormatChanged: (format) => setState(() {
-          _calendarFormat = format;
-        }),
+        
+        onFormatChanged: (format) {
+          context.read<TaskProvider>().setCalendarFormat(format);
+        },
 
         daysOfWeekStyle: DaysOfWeekStyle(
           weekdayStyle: TextStyle(color: colors.primary),
@@ -88,7 +77,7 @@ class _CustomCalendarState extends State<CustomCalendar> {
           defaultTextStyle: TextStyle(color: colors.primary),
 
           todayDecoration: BoxDecoration(
-            color: colors.primary.withValues(alpha: .5),
+            color: colors.primary.withOpacity(.5),
             shape: BoxShape.circle,
           ),
 
@@ -97,7 +86,7 @@ class _CustomCalendarState extends State<CustomCalendar> {
             shape: BoxShape.circle,
           ),
 
-          selectedTextStyle: TextStyle(
+          selectedTextStyle: const TextStyle(
             fontWeight: FontWeight.bold,
             color: Colors.white,
           ),

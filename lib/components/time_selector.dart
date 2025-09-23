@@ -1,21 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/task_provider.dart';
 
-class TimeSelector extends StatefulWidget {
-  final Function(TimeOfDay)? onStartTimeSelected;
-  final Function(TimeOfDay)? onEndTimeSelected;
-  const TimeSelector({
-    super.key,
-    this.onStartTimeSelected,
-    this.onEndTimeSelected,
-  });
-
-  @override
-  State<TimeSelector> createState() => _TimeSelectorState();
-}
-
-class _TimeSelectorState extends State<TimeSelector> {
-  TimeOfDay _startTime = TimeOfDay(hour: 9, minute: 0);
-  TimeOfDay _endTime = TimeOfDay(hour: 17, minute: 0);
+class TimeSelector extends StatelessWidget {
+  const TimeSelector({super.key});
 
   int get12HourFormat(int hour) {
     if (hour == 0) return 12;
@@ -26,6 +14,8 @@ class _TimeSelectorState extends State<TimeSelector> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final taskProvider = context.watch<TaskProvider>();
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -33,15 +23,10 @@ class _TimeSelectorState extends State<TimeSelector> {
           onTap: () async {
             final TimeOfDay? selectedTime = await showTimePicker(
               context: context,
-              initialTime: _startTime,
+              initialTime: taskProvider.startTime,
             );
             if (selectedTime != null) {
-              setState(() {
-                _startTime = selectedTime;
-              });
-              if (widget.onStartTimeSelected != null) {
-                widget.onEndTimeSelected!(selectedTime);
-              }
+              context.read<TaskProvider>().setStartTime(selectedTime);
             }
           },
           child: Row(
@@ -56,9 +41,9 @@ class _TimeSelectorState extends State<TimeSelector> {
                   padding: const EdgeInsets.symmetric(horizontal: 8.0),
                   child: Center(
                     child: Text(
-                      get12HourFormat(
-                        _startTime.hour,
-                      ).toString().padLeft(2, '0'),
+                      get12HourFormat(taskProvider.startTime.hour)
+                          .toString()
+                          .padLeft(2, '0'),
                       style: TextStyle(
                         color: colors.primary,
                         fontWeight: FontWeight.w600,
@@ -78,7 +63,7 @@ class _TimeSelectorState extends State<TimeSelector> {
                   padding: const EdgeInsets.symmetric(horizontal: 8.0),
                   child: Center(
                     child: Text(
-                      _startTime.minute.toString().padLeft(2, '0'),
+                      taskProvider.startTime.minute.toString().padLeft(2, '0'),
                       style: TextStyle(
                         color: colors.primary,
                         fontWeight: FontWeight.w600,
@@ -97,7 +82,7 @@ class _TimeSelectorState extends State<TimeSelector> {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8.0),
                   child: Text(
-                    _startTime.format(context).split(' ').last,
+                    taskProvider.startTime.format(context).split(' ').last,
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w600,
@@ -109,7 +94,6 @@ class _TimeSelectorState extends State<TimeSelector> {
             ],
           ),
         ),
-
         Center(
           child: Container(
             height: 4,
@@ -120,20 +104,14 @@ class _TimeSelectorState extends State<TimeSelector> {
             ),
           ),
         ),
-
         InkWell(
           onTap: () async {
             final TimeOfDay? selectedTime = await showTimePicker(
               context: context,
-              initialTime: _endTime,
+              initialTime: taskProvider.endTime,
             );
             if (selectedTime != null) {
-              setState(() {
-                _endTime = selectedTime;
-              });
-              if (widget.onEndTimeSelected != null) {
-                widget.onEndTimeSelected!(selectedTime);
-              }
+              context.read<TaskProvider>().setEndTime(selectedTime);
             }
           },
           child: Row(
@@ -148,7 +126,9 @@ class _TimeSelectorState extends State<TimeSelector> {
                   padding: const EdgeInsets.symmetric(horizontal: 8.0),
                   child: Center(
                     child: Text(
-                      get12HourFormat(_endTime.hour).toString().padLeft(2, '0'),
+                      get12HourFormat(taskProvider.endTime.hour)
+                          .toString()
+                          .padLeft(2, '0'),
                       style: TextStyle(
                         color: colors.primary,
                         fontWeight: FontWeight.w600,
@@ -168,7 +148,7 @@ class _TimeSelectorState extends State<TimeSelector> {
                   padding: const EdgeInsets.symmetric(horizontal: 8.0),
                   child: Center(
                     child: Text(
-                      _endTime.minute.toString().padLeft(2, '0'),
+                      taskProvider.endTime.minute.toString().padLeft(2, '0'),
                       style: TextStyle(
                         color: colors.primary,
                         fontWeight: FontWeight.w600,
@@ -187,7 +167,7 @@ class _TimeSelectorState extends State<TimeSelector> {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8.0),
                   child: Text(
-                    _endTime.format(context).split(' ').last,
+                    taskProvider.endTime.format(context).split(' ').last,
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w600,
