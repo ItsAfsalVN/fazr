@@ -1,4 +1,7 @@
+// main.dart
+
 import 'package:fazr/firebase_options.dart';
+import 'package:fazr/providers/date_provider.dart';
 import 'package:fazr/providers/task_provider.dart';
 import 'package:fazr/screens/splash.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -10,7 +13,7 @@ void main(List<String> args) async {
   await dotenv.load(fileName: ".env");
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  runApp(App());
+  runApp(const App());
 }
 
 class App extends StatelessWidget {
@@ -18,21 +21,24 @@ class App extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (context) => TaskProvider(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (ctx) => TaskProvider()),
+        ChangeNotifierProvider(create: (ctx) => DateProvider()),
+      ],
       child: MaterialApp(
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(
-            seedColor: Color(0xff739077),
-            primary: Color(0xff739077),
-            error: Color(0xffC46363),
-            secondary: Color(0xff4F6F52),
+            seedColor: const Color(0xff739077),
+            primary: const Color(0xff739077),
+            error: const Color(0xffC46363),
+            secondary: const Color(0xff4F6F52),
           ),
-          scaffoldBackgroundColor: Color(0xffEDEFF4),
+          scaffoldBackgroundColor: const Color(0xffEDEFF4),
           fontFamily: 'Urbanist',
         ),
         debugShowCheckedModeBanner: false,
-        home: Splash(),
+        home: const Splash(),
       ),
     );
   }

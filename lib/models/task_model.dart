@@ -23,6 +23,27 @@ class TaskModel {
     required this.repeat
   });
 
+
+  factory TaskModel.fromJson(String id, Map<String, dynamic> data) {
+    return TaskModel(
+      uid: id,
+      title: data['title'] as String,
+      description: data['description'] as String,
+      startingDate: DateTime.parse(data['startingDate'] as String),
+      startTime: TimeOfDay(
+        hour: int.parse(data['startTime'].split(':')[0]),
+        minute: int.parse(data['startTime'].split(':')[1]),
+      ),
+      endTime: TimeOfDay(
+        hour: int.parse(data['endTime'].split(':')[0]),
+        minute: int.parse(data['endTime'].split(':')[1]),
+      ),
+      alertAtStart: data['alertAtStart'] as bool,
+      alertAtEnd: data['alertAtEnd'] as bool,
+      repeat: data['repeat'] as String,
+    );
+  }
+
   // The copyWith method
   TaskModel copyWith({
     String? uid,

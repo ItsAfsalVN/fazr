@@ -1,11 +1,12 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fazr/models/task_model.dart';
 import 'package:flutter/material.dart';
-import 'package:table_calendar/table_calendar.dart'; // Import this
-import '../services/database_services.dart'; // Ensure this path is correct
+import 'package:table_calendar/table_calendar.dart';
+import '../services/database_services.dart';
 
 class TaskProvider extends ChangeNotifier {
   List<TaskModel> _tasks = [];
-  
+
   TaskModel _temporaryTask = TaskModel(
     uid: null,
     title: '',
@@ -20,6 +21,7 @@ class TaskProvider extends ChangeNotifier {
 
   CalendarFormat _calendarFormat = CalendarFormat.month;
 
+  // Getters
   String get title => _temporaryTask.title;
   String get description => _temporaryTask.description;
   DateTime get startingDate => _temporaryTask.startingDate;
@@ -28,9 +30,10 @@ class TaskProvider extends ChangeNotifier {
   bool get alertAtStart => _temporaryTask.alertAtStart;
   bool get alertAtEnd => _temporaryTask.alertAtEnd;
   String get repeat => _temporaryTask.repeat;
-
   CalendarFormat get calendarFormat => _calendarFormat;
+  List<TaskModel> get tasks => [..._tasks];
 
+  // Setters (unchanged)
   void setTitle(String value) {
     _temporaryTask = _temporaryTask.copyWith(title: value);
     notifyListeners();
@@ -101,7 +104,11 @@ class TaskProvider extends ChangeNotifier {
     try {
       final taskId = await createTaskInFireStore(jsonTask);
       final newTask = _temporaryTask.copyWith(uid: taskId);
+
+      // Add the new task to the local list
       _tasks.add(newTask);
+
+      // Reset the temporary task
       _temporaryTask = TaskModel(
         uid: null,
         title: '',
@@ -113,12 +120,77 @@ class TaskProvider extends ChangeNotifier {
         alertAtEnd: false,
         repeat: "once",
       );
+
+      // Notify listeners immediately so the Home screen updates
+      notifyListeners();
     } catch (e) {
       print(e);
+      // Re-throw the error so the Create screen can handle it
+      throw e;
+    }
+  }
+
+  Future<void> fetchAllTasks() async {
+    try {
+      QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+          .collection('tasks')
+          .get();
+
+      _tasks = querySnapshot.docs.map((doc) {
+        return TaskModel.fromJson(doc.id, doc.data() as Map<String, dynamic>);
+      }).toList();
+    } catch (e) {
+      print("Error fetching tasks: $e");
     } finally {
       notifyListeners();
     }
   }
 
-  List<TaskModel> get tasks => [..._tasks];
+  List<TaskModel> getTasksForDate(DateTime targetDate) {
+    List<TaskModel> tasksForDate = [];
+
+    final normalizedTargetDate = DateTime(
+      targetDate.year,
+      targetDate.month,
+      targetDate.day,
+    );
+
+    for (var task in _tasks) {
+      final normalizedStartingDate = DateTime(
+        task.startingDate.year,
+        task.startingDate.month,
+        task.startingDate.day,
+      );
+
+      if (task.repeat == 'once') {
+        if (normalizedStartingDate.isAtSameMomentAs(normalizedTargetDate)) {
+          tasksForDate.add(task);
+        }
+      } else {
+        if (normalizedStartingDate.isAfter(normalizedTargetDate)) {
+          continue;
+        }
+
+        switch (task.repeat) {
+          case 'daily':
+            tasksForDate.add(task);
+            break;
+
+          case 'weekly':
+            if (normalizedStartingDate.weekday ==
+                normalizedTargetDate.weekday) {
+              tasksForDate.add(task);
+            }
+            break;
+
+          case 'monthly':
+            if (normalizedStartingDate.day == normalizedTargetDate.day) {
+              tasksForDate.add(task);
+            }
+            break;
+        }
+      }
+    }
+    return tasksForDate;
+  }
 }
