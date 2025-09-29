@@ -4,6 +4,7 @@ import 'package:fazr/components/custom_progress_bar.dart';
 import 'package:fazr/components/timeline_selector.dart';
 import 'package:fazr/providers/date_provider.dart';
 import 'package:fazr/providers/task_provider.dart';
+import 'package:fazr/providers/completed_task_provider.dart'; // Import the new provider
 import 'package:fazr/utils/format_time.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -16,10 +17,9 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> with WidgetsBindingObserver {
-  // Use a Map to store the completion state for each task locally
-  Map<String, bool> _completedTasks = {};
+  // We no longer need this local variable
+  // Map<String, bool> _completedTasks = {};
 
-  // You will still need the Timer for real-time progress bar updates
   Timer? _timer;
 
   @override
@@ -28,8 +28,9 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<TaskProvider>().fetchAllTasks();
+      // Fetch completed tasks when the page loads
+      context.read<CompletedTaskProvider>().fetchCompletedTasks();
     });
-    // Start a timer to refresh the UI every second
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (mounted) {
         setState(() {});
@@ -40,7 +41,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _timer?.cancel(); // Cancel the timer
+    _timer?.cancel();
     super.dispose();
   }
 
@@ -48,6 +49,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       context.read<TaskProvider>().fetchAllTasks();
+      context.read<CompletedTaskProvider>().fetchCompletedTasks();
     }
   }
 
@@ -65,7 +67,8 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Column(
-              spacing: 16,
+              // Use Column instead of Padding to have spacing
+              // and remove the extra Column with 'spacing'
               children: [
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -91,8 +94,9 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
               ],
             ),
             Expanded(
-              child: Consumer2<TaskProvider, DateProvider>(
-                builder: (context, taskProvider, dateProvider, child) {
+              // Add CompletedTaskProvider to the consumer
+              child: Consumer3<TaskProvider, DateProvider, CompletedTaskProvider>(
+                builder: (context, taskProvider, dateProvider, completedTaskProvider, child) {
                   final selectedDate = dateProvider.date;
                   final tasksForSelectedDate = taskProvider.getTasksForDate(
                     selectedDate,
@@ -107,8 +111,10 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                             itemBuilder: (context, index) {
                               final task = tasksForSelectedDate[index];
 
-                              final bool isCompleted =
-                                  _completedTasks[task.uid] ?? false;
+                              // Check if the current task is in the completed tasks list for the selected date
+                              final bool isCompleted = completedTaskProvider.completedTasks.any(
+                                (completedTask) => completedTask.taskId == task.uid && completedTask.completionDate.day == selectedDate.day,
+                              );
 
                               return Container(
                                 margin: EdgeInsets.only(bottom: 12),
@@ -119,13 +125,10 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                                 child: Padding(
                                   padding: const EdgeInsets.all(6),
                                   child: Column(
-                                    spacing: 12,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                         children: [
                                           Text(
                                             task.title,
@@ -138,20 +141,20 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                                           Transform.scale(
                                             scale: 1.3,
                                             child: Checkbox(
-                                              materialTapTargetSize:
-                                                  MaterialTapTargetSize
-                                                      .shrinkWrap,
+                                              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                                               value: isCompleted,
-
                                               side: BorderSide(
                                                 color: colors.primary,
                                               ),
                                               onChanged: (bool? newValue) {
                                                 if (newValue != null) {
-                                                  setState(() {
-                                                    _completedTasks[task.uid!] =
-                                                        newValue;
-                                                  });
+                                                  // Use the provider to update the completion status
+                                                  taskProvider.updateTaskCompletion(
+                                                    task.uid!,
+                                                    selectedDate,
+                                                    newValue,
+                                                    context,
+                                                  );
                                                 }
                                               },
                                             ),
@@ -166,8 +169,9 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                                           fontSize: 17,
                                         ),
                                       ),
+                                      // Your custom progress bar
                                       CustomProgressBar(
-                                        value: .5,
+                                        value: .5, // You should calculate this value dynamically
                                         startTime: formatTime(
                                           context,
                                           task.startTime,

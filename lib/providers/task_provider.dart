@@ -1,6 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:fazr/models/completed_Task_model.dart';
 import 'package:fazr/models/task_model.dart';
+import 'package:fazr/providers/completed_task_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../services/database_services.dart';
 
@@ -192,5 +195,43 @@ class TaskProvider extends ChangeNotifier {
       }
     }
     return tasksForDate;
+  }
+
+  Future<void> updateTaskCompletion(
+    String taskId,
+    DateTime date,
+    bool isCompleted,
+    BuildContext context,
+  ) async {
+    final completedTaskProvider = Provider.of<CompletedTaskProvider>(
+      context,
+      listen: false,
+    );
+
+    try {
+      if (isCompleted) {
+        await FirebaseFirestore.instance.collection('completed_tasks').add({
+          'taskId': taskId,
+          'completionDate': Timestamp.fromDate(date),
+        });
+
+        completedTaskProvider.addCompletedTask(
+          CompletedTask(taskId: taskId, completionDate: date),
+        );
+      } else {
+        final querySnapshot = await FirebaseFirestore.instance
+            .collection('completed_tasks')
+            .where('taskId', isEqualTo: taskId)
+            .where('completionDate', isEqualTo: Timestamp.fromDate(date))
+            .get();
+        for (var doc in querySnapshot.docs) {
+          await doc.reference.delete();
+        }
+        completedTaskProvider.removeCompletedTask(taskId, date);
+      }
+    } catch (e) {
+      print("Error updating task completion: $e");
+      throw e;
+    }
   }
 }

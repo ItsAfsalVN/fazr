@@ -1,6 +1,7 @@
 // main.dart
 
 import 'package:fazr/firebase_options.dart';
+import 'package:fazr/providers/completed_task_provider.dart';
 import 'package:fazr/providers/date_provider.dart';
 import 'package:fazr/providers/task_provider.dart';
 import 'package:fazr/screens/splash.dart';
@@ -25,6 +26,7 @@ class App extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (ctx) => TaskProvider()),
         ChangeNotifierProvider(create: (ctx) => DateProvider()),
+        ChangeNotifierProvider(create: (ctx) => CompletedTaskProvider()),
       ],
       child: MaterialApp(
         theme: ThemeData(
