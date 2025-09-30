@@ -149,7 +149,6 @@ class _CreateState extends State<Create> {
                   AddAlert(),
                 ],
               ),
-              // Pass the controller to the InputField
               InputField(
                 controller: _titleController,
                 label: 'Title',

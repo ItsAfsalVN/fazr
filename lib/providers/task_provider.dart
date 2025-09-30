@@ -36,7 +36,6 @@ class TaskProvider extends ChangeNotifier {
   CalendarFormat get calendarFormat => _calendarFormat;
   List<TaskModel> get tasks => [..._tasks];
 
-  // Setters (unchanged)
   void setTitle(String value) {
     _temporaryTask = _temporaryTask.copyWith(title: value);
     notifyListeners();
@@ -108,10 +107,8 @@ class TaskProvider extends ChangeNotifier {
       final taskId = await createTaskInFireStore(jsonTask);
       final newTask = _temporaryTask.copyWith(uid: taskId);
 
-      // Add the new task to the local list
       _tasks.add(newTask);
 
-      // Reset the temporary task
       _temporaryTask = TaskModel(
         uid: null,
         title: '',
@@ -124,11 +121,9 @@ class TaskProvider extends ChangeNotifier {
         repeat: "once",
       );
 
-      // Notify listeners immediately so the Home screen updates
       notifyListeners();
     } catch (e) {
       print(e);
-      // Re-throw the error so the Create screen can handle it
       throw e;
     }
   }
@@ -231,6 +226,39 @@ class TaskProvider extends ChangeNotifier {
       }
     } catch (e) {
       print("Error updating task completion: $e");
+      throw e;
+    }
+  }
+
+  Future<void> updateTask(String taskId) async {
+    final jsonTask = toJson(_temporaryTask);
+
+    try {
+      await FirebaseFirestore.instance
+          .collection('tasks')
+          .doc(taskId)
+          .update(jsonTask);
+
+      final taskIndex = _tasks.indexWhere((task) => task.uid == taskId);
+
+      if (taskIndex != -1) {
+        _tasks[taskIndex] = _temporaryTask.copyWith(uid: taskId);
+      } 
+
+      _temporaryTask = TaskModel(
+        uid: null,
+        title: '',
+        description: '',
+        startingDate: DateTime.now(),
+        startTime: TimeOfDay.now(),
+        endTime: TimeOfDay.now(),
+        alertAtStart: false,
+        alertAtEnd: false,
+        repeat: "once",
+      );
+
+      notifyListeners();
+    } catch (e) {
       throw e;
     }
   }

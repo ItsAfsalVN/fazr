@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:fazr/components/category_select.dart';
 import 'package:fazr/components/custom_progress_bar.dart';
+import 'package:fazr/components/edit_task_modal.dart';
 import 'package:fazr/components/timeline_selector.dart';
 import 'package:fazr/providers/date_provider.dart';
 import 'package:fazr/providers/task_provider.dart';
@@ -18,9 +19,6 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> with WidgetsBindingObserver {
-  // We no longer need this local variable
-  // Map<String, bool> _completedTasks = {};
-
   Timer? _timer;
 
   @override
@@ -29,7 +27,6 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<TaskProvider>().fetchAllTasks();
-      // Fetch completed tasks when the page loads
       context.read<CompletedTaskProvider>().fetchCompletedTasks();
     });
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -109,7 +106,31 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                       );
 
                       return tasksForSelectedDate.isEmpty
-                          ? const Center(child: Text('No tasks for this date'))
+                          ? Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.task_alt,
+                                    size: 56,
+                                    color: colors.primary.withValues(
+                                      alpha: 0.5,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    'No tasks for this date',
+                                    style: TextStyle(
+                                      color: colors.primary.withValues(
+                                        alpha: 0.7,
+                                      ),
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
                           : Padding(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 20.0,
@@ -139,77 +160,88 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                                         ),
                                       );
 
-                                  return Container(
-                                    margin: EdgeInsets.only(bottom: 12),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(12),
+                                  return InkWell(
+                                    onTap: () => showModalBottomSheet(
+                                      context: context,
+                                      isScrollControlled: true,
+                                      backgroundColor: Colors.transparent,
+                                      builder: (BuildContext context) {
+                                        return EditTaskModal(task: task);
+                                      },
                                     ),
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(6),
-                                      child: Column(
-                                        spacing: 6,
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Text(
-                                                task.title,
-                                                style: TextStyle(
-                                                  color: colors.primary,
-                                                  fontWeight: FontWeight.w600,
-                                                  fontSize: 24,
-                                                ),
-                                              ),
-                                              Transform.scale(
-                                                scale: 1.3,
-                                                child: Checkbox(
-                                                  materialTapTargetSize:
-                                                      MaterialTapTargetSize
-                                                          .shrinkWrap,
-                                                  value: isCompleted,
-                                                  side: BorderSide(
+                                    child: Container(
+                                      margin: const EdgeInsets.only(bottom: 12),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(6),
+                                        child: Column(
+                                          spacing: 6,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                Text(
+                                                  task.title,
+                                                  style: TextStyle(
                                                     color: colors.primary,
+                                                    fontWeight: FontWeight.w600,
+                                                    fontSize: 24,
                                                   ),
-                                                  onChanged: (bool? newValue) {
-                                                    if (newValue != null) {
-                                                      taskProvider
-                                                          .updateTaskCompletion(
-                                                            task.uid!,
-                                                            selectedDate,
-                                                            newValue,
-                                                            context,
-                                                          );
-                                                    }
-                                                  },
                                                 ),
+                                                Transform.scale(
+                                                  scale: 1.3,
+                                                  child: Checkbox(
+                                                    materialTapTargetSize:
+                                                        MaterialTapTargetSize
+                                                            .shrinkWrap,
+                                                    value: isCompleted,
+                                                    side: BorderSide(
+                                                      color: colors.primary,
+                                                    ),
+                                                    onChanged: (bool? newValue) {
+                                                      if (newValue != null) {
+                                                        taskProvider
+                                                            .updateTaskCompletion(
+                                                              task.uid!,
+                                                              selectedDate,
+                                                              newValue,
+                                                              context,
+                                                            );
+                                                      }
+                                                    },
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            Text(
+                                              task.description,
+                                              style: TextStyle(
+                                                color: colors.primary,
+                                                fontWeight: FontWeight.w300,
+                                                fontSize: 17,
                                               ),
-                                            ],
-                                          ),
-                                          Text(
-                                            task.description,
-                                            style: TextStyle(
-                                              color: colors.primary,
-                                              fontWeight: FontWeight.w300,
-                                              fontSize: 17,
                                             ),
-                                          ),
-                                          CustomProgressBar(
-                                            value: calculateProgress(task),
-                                            startTime: formatTime(
-                                              context,
-                                              task.startTime,
+                                            CustomProgressBar(
+                                              value: calculateProgress(task),
+                                              startTime: formatTime(
+                                                context,
+                                                task.startTime,
+                                              ),
+                                              endTime: formatTime(
+                                                context,
+                                                task.endTime,
+                                              ),
+                                              isFinished: isTaskFinished,
                                             ),
-                                            endTime: formatTime(
-                                              context,
-                                              task.endTime,
-                                            ),
-                                            isFinished: isTaskFinished,
-                                          ),
-                                        ],
+                                          ],
+                                        ),
                                       ),
                                     ),
                                   );
