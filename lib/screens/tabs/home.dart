@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:fazr/components/category_select.dart';
 import 'package:fazr/components/custom_progress_bar.dart';
 import 'package:fazr/components/edit_task_modal.dart';
+import 'package:fazr/components/task_card.dart';
 import 'package:fazr/components/timeline_selector.dart';
 import 'package:fazr/providers/date_provider.dart';
 import 'package:fazr/providers/task_provider.dart';
@@ -92,240 +93,89 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
               ],
             ),
             Expanded(
-              child: Consumer3<TaskProvider, DateProvider, CompletedTaskProvider>(
-                builder: (context, taskProvider, dateProvider, completedTaskProvider, child) {
-                  final selectedDate = dateProvider.date;
-                  final tasksForSelectedDate = taskProvider.getTasksForDate(
-                    selectedDate,
-                  );
+              child:
+                  Consumer3<TaskProvider, DateProvider, CompletedTaskProvider>(
+                    builder:
+                        (
+                          context,
+                          taskProvider,
+                          dateProvider,
+                          completedTaskProvider,
+                          child,
+                        ) {
+                          final selectedDate = dateProvider.date;
+                          final tasksForSelectedDate = taskProvider
+                              .getTasksForDate(selectedDate);
 
-                  return tasksForSelectedDate.isEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.task_alt,
-                                size: 56,
-                                color: colors.primary.withValues(alpha: 0.5),
-                              ),
-                              const SizedBox(height: 12),
-                              Text(
-                                'No tasks for this date',
-                                style: TextStyle(
-                                  color: colors.primary.withValues(alpha: 0.7),
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        )
-                      : Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                          child: ListView.builder(
-                            itemCount: tasksForSelectedDate.length,
-                            itemBuilder: (context, index) {
-                              final task = tasksForSelectedDate[index];
-
-                              final bool isCompleted = completedTaskProvider
-                                  .completedTasks
-                                  .any(
-                                    (completedTask) =>
-                                        completedTask.taskId == task.uid &&
-                                        completedTask.completionDate.day ==
-                                            selectedDate.day,
-                                  );
-
-                              final bool isTaskFinished = DateTime.now()
-                                  .isAfter(
-                                    DateTime(
-                                      DateTime.now().year,
-                                      DateTime.now().month,
-                                      DateTime.now().day,
-                                      task.endTime.hour,
-                                      task.endTime.minute,
-                                    ),
-                                  );
-
-                              return Stack(
-                                children: [
-                                  Container(
-                                    height: 100,
-                                    margin: const EdgeInsets.only(bottom: 12),
-                                    decoration: BoxDecoration(
-                                      color: colors.error,
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: const Padding(
-                                      padding: EdgeInsets.only(right: 20.0),
-                                      child: Align(
-                                        alignment: Alignment.centerRight,
-                                        child: Icon(
-                                          Icons.delete,
-                                          color: Colors.white,
-                                          size: 32,
+                          return tasksForSelectedDate.isEmpty
+                              ? Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.task_alt,
+                                        size: 56,
+                                        color: colors.primary.withValues(
+                                          alpha: 0.5,
                                         ),
                                       ),
-                                    ),
+                                      const SizedBox(height: 12),
+                                      Text(
+                                        'No tasks for this date',
+                                        style: TextStyle(
+                                          color: colors.primary.withValues(
+                                            alpha: 0.7,
+                                          ),
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  Dismissible(
-                                    key: Key(task.uid!),
-                                    direction: DismissDirection.endToStart,
-                                    confirmDismiss: (direction) async {
-                                      return await showDialog(
-                                        context: context,
-                                        builder: (BuildContext context) {
-                                          return AlertDialog(
-                                            title: const Text('Delete Task'),
-                                            content: const Text(
-                                              'Are you sure you want to delete this task?',
+                                )
+                              : Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 20.0,
+                                  ),
+                                  child: ListView.builder(
+                                    itemCount: tasksForSelectedDate.length,
+                                    itemBuilder: (context, index) {
+                                      final task = tasksForSelectedDate[index];
+
+                                      final bool isCompleted =
+                                          completedTaskProvider.completedTasks
+                                              .any(
+                                                (completedTask) =>
+                                                    completedTask.taskId ==
+                                                        task.uid &&
+                                                    completedTask
+                                                            .completionDate
+                                                            .day ==
+                                                        selectedDate.day,
+                                              );
+
+                                      final bool isTaskFinished = DateTime.now()
+                                          .isAfter(
+                                            DateTime(
+                                              DateTime.now().year,
+                                              DateTime.now().month,
+                                              DateTime.now().day,
+                                              task.endTime.hour,
+                                              task.endTime.minute,
                                             ),
-                                            actions: [
-                                              TextButton(
-                                                onPressed: () => Navigator.of(
-                                                  context,
-                                                ).pop(false),
-                                                child: const Text('Cancel'),
-                                              ),
-                                              TextButton(
-                                                onPressed: () => Navigator.of(
-                                                  context,
-                                                ).pop(true),
-                                                style: TextButton.styleFrom(
-                                                  foregroundColor: colors.error,
-                                                ),
-                                                child: const Text('Delete'),
-                                              ),
-                                            ],
                                           );
-                                        },
+
+                                      return TaskCard(
+                                        task: task,
+                                        selectedDate: selectedDate,
+                                        isCompleted: isCompleted,
+                                        isTaskFinished: isTaskFinished,
                                       );
                                     },
-                                    onDismissed: (direction) async {
-                                      try {
-                                        await taskProvider.deleteTask(
-                                          task.uid!,
-                                        );
-                                        if (context.mounted) {
-                                          showSnackBar(
-                                            context,
-                                            SnackBarType.success,
-                                            'Task deleted successfully',
-                                          );
-                                        }
-                                      } catch (e) {
-                                        if (context.mounted) {
-                                          showSnackBar(
-                                            context,
-                                            SnackBarType.error,
-                                            e.toString(),
-                                          );
-                                        }
-                                      }
-                                    },
-                                    background: Container(),
-                                    child: Container(
-                                      margin: const EdgeInsets.only(bottom: 12),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      clipBehavior: Clip.hardEdge,
-                                      child: Material(
-                                        color: Colors.transparent,
-                                        child: InkWell(
-                                          onTap: () => showModalBottomSheet(
-                                            context: context,
-                                            isScrollControlled: true,
-                                            backgroundColor: Colors.transparent,
-                                            builder: (BuildContext context) {
-                                              return EditTaskModal(task: task);
-                                            },
-                                          ),
-                                          child: Padding(
-                                            padding: const EdgeInsets.all(6),
-                                            child: Column(
-                                              spacing: 6,
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .spaceBetween,
-                                                  children: [
-                                                    Text(
-                                                      task.title,
-                                                      style: TextStyle(
-                                                        color: colors.primary,
-                                                        fontWeight:
-                                                            FontWeight.w600,
-                                                        fontSize: 24,
-                                                      ),
-                                                    ),
-                                                    Transform.scale(
-                                                      scale: 1.3,
-                                                      child: Checkbox(
-                                                        materialTapTargetSize:
-                                                            MaterialTapTargetSize
-                                                                .shrinkWrap,
-                                                        value: isCompleted,
-                                                        side: BorderSide(
-                                                          color: colors.primary,
-                                                        ),
-                                                        onChanged: (bool? newValue) {
-                                                          if (newValue !=
-                                                              null) {
-                                                            taskProvider
-                                                                .updateTaskCompletion(
-                                                                  task.uid!,
-                                                                  selectedDate,
-                                                                  newValue,
-                                                                  context,
-                                                                );
-                                                          }
-                                                        },
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                                Text(
-                                                  task.description,
-                                                  style: TextStyle(
-                                                    color: colors.primary,
-                                                    fontWeight: FontWeight.w300,
-                                                    fontSize: 17,
-                                                  ),
-                                                ),
-                                                CustomProgressBar(
-                                                  value: calculateProgress(
-                                                    task,
-                                                  ),
-                                                  startTime: formatTime(
-                                                    context,
-                                                    task.startTime,
-                                                  ),
-                                                  endTime: formatTime(
-                                                    context,
-                                                    task.endTime,
-                                                  ),
-                                                  isFinished: isTaskFinished,
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
                                   ),
-                                ],
-                              );
-                            },
-                          ),
-                        );
-                },
-              ),
+                                );
+                        },
+                  ),
             ),
           ],
         ),
