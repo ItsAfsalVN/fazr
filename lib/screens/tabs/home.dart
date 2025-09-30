@@ -5,6 +5,7 @@ import 'package:fazr/components/timeline_selector.dart';
 import 'package:fazr/providers/date_provider.dart';
 import 'package:fazr/providers/task_provider.dart';
 import 'package:fazr/providers/completed_task_provider.dart'; // Import the new provider
+import 'package:fazr/utils/calculateProgress.dart';
 import 'package:fazr/utils/format_time.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -67,8 +68,6 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Column(
-              // Use Column instead of Padding to have spacing
-              // and remove the extra Column with 'spacing'
               children: [
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -94,101 +93,116 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
               ],
             ),
             Expanded(
-              // Add CompletedTaskProvider to the consumer
               child: Consumer3<TaskProvider, DateProvider, CompletedTaskProvider>(
-                builder: (context, taskProvider, dateProvider, completedTaskProvider, child) {
-                  final selectedDate = dateProvider.date;
-                  final tasksForSelectedDate = taskProvider.getTasksForDate(
-                    selectedDate,
-                  );
+                builder:
+                    (
+                      context,
+                      taskProvider,
+                      dateProvider,
+                      completedTaskProvider,
+                      child,
+                    ) {
+                      final selectedDate = dateProvider.date;
+                      final tasksForSelectedDate = taskProvider.getTasksForDate(
+                        selectedDate,
+                      );
 
-                  return tasksForSelectedDate.isEmpty
-                      ? const Center(child: Text('No tasks for this date'))
-                      : Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                          child: ListView.builder(
-                            itemCount: tasksForSelectedDate.length,
-                            itemBuilder: (context, index) {
-                              final task = tasksForSelectedDate[index];
+                      return tasksForSelectedDate.isEmpty
+                          ? const Center(child: Text('No tasks for this date'))
+                          : Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20.0,
+                              ),
+                              child: ListView.builder(
+                                itemCount: tasksForSelectedDate.length,
+                                itemBuilder: (context, index) {
+                                  final task = tasksForSelectedDate[index];
 
-                              // Check if the current task is in the completed tasks list for the selected date
-                              final bool isCompleted = completedTaskProvider.completedTasks.any(
-                                (completedTask) => completedTask.taskId == task.uid && completedTask.completionDate.day == selectedDate.day,
-                              );
+                                  final bool isCompleted = completedTaskProvider
+                                      .completedTasks
+                                      .any(
+                                        (completedTask) =>
+                                            completedTask.taskId == task.uid &&
+                                            completedTask.completionDate.day ==
+                                                selectedDate.day,
+                                      );
 
-                              return Container(
-                                margin: EdgeInsets.only(bottom: 12),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(6),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  return Container(
+                                    margin: EdgeInsets.only(bottom: 12),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(6),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Text(
+                                                task.title,
+                                                style: TextStyle(
+                                                  color: colors.primary,
+                                                  fontWeight: FontWeight.w600,
+                                                  fontSize: 24,
+                                                ),
+                                              ),
+                                              Transform.scale(
+                                                scale: 1.3,
+                                                child: Checkbox(
+                                                  materialTapTargetSize:
+                                                      MaterialTapTargetSize
+                                                          .shrinkWrap,
+                                                  value: isCompleted,
+                                                  side: BorderSide(
+                                                    color: colors.primary,
+                                                  ),
+                                                  onChanged: (bool? newValue) {
+                                                    if (newValue != null) {
+                                                      taskProvider
+                                                          .updateTaskCompletion(
+                                                            task.uid!,
+                                                            selectedDate,
+                                                            newValue,
+                                                            context,
+                                                          );
+                                                    }
+                                                  },
+                                                ),
+                                              ),
+                                            ],
+                                          ),
                                           Text(
-                                            task.title,
+                                            task.description,
                                             style: TextStyle(
                                               color: colors.primary,
-                                              fontWeight: FontWeight.w600,
-                                              fontSize: 24,
+                                              fontWeight: FontWeight.w300,
+                                              fontSize: 17,
                                             ),
                                           ),
-                                          Transform.scale(
-                                            scale: 1.3,
-                                            child: Checkbox(
-                                              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                              value: isCompleted,
-                                              side: BorderSide(
-                                                color: colors.primary,
-                                              ),
-                                              onChanged: (bool? newValue) {
-                                                if (newValue != null) {
-                                                  // Use the provider to update the completion status
-                                                  taskProvider.updateTaskCompletion(
-                                                    task.uid!,
-                                                    selectedDate,
-                                                    newValue,
-                                                    context,
-                                                  );
-                                                }
-                                              },
+                                          CustomProgressBar(
+                                            value: calculateProgress(task),
+                                            startTime: formatTime(
+                                              context,
+                                              task.startTime,
+                                            ),
+                                            endTime: formatTime(
+                                              context,
+                                              task.endTime,
                                             ),
                                           ),
                                         ],
                                       ),
-                                      Text(
-                                        task.description,
-                                        style: TextStyle(
-                                          color: colors.primary,
-                                          fontWeight: FontWeight.w300,
-                                          fontSize: 17,
-                                        ),
-                                      ),
-                                      // Your custom progress bar
-                                      CustomProgressBar(
-                                        value: .5, // You should calculate this value dynamically
-                                        startTime: formatTime(
-                                          context,
-                                          task.startTime,
-                                        ),
-                                        endTime: formatTime(
-                                          context,
-                                          task.endTime,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        );
-                },
+                                    ),
+                                  );
+                                },
+                              ),
+                            );
+                    },
               ),
             ),
           ],
