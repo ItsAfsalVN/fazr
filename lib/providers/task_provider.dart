@@ -243,7 +243,7 @@ class TaskProvider extends ChangeNotifier {
 
       if (taskIndex != -1) {
         _tasks[taskIndex] = _temporaryTask.copyWith(uid: taskId);
-      } 
+      }
 
       _temporaryTask = TaskModel(
         uid: null,
@@ -259,6 +259,19 @@ class TaskProvider extends ChangeNotifier {
 
       notifyListeners();
     } catch (e) {
+      throw e;
+    }
+  }
+
+  Future<void> deleteTask(String taskId) async {
+    try {
+      await FirebaseFirestore.instance.collection('tasks').doc(taskId).delete();
+
+      _tasks.removeWhere((task) => task.uid == taskId);
+
+      notifyListeners();
+    } catch (e) {
+      print("Error deleting task: $e");
       throw e;
     }
   }
