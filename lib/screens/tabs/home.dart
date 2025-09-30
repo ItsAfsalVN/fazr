@@ -68,6 +68,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Column(
+              spacing: 16,
               children: [
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20.0),
