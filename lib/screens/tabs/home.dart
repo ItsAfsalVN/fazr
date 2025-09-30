@@ -128,6 +128,17 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                                                 selectedDate.day,
                                       );
 
+                                  final bool isTaskFinished = DateTime.now()
+                                      .isAfter(
+                                        DateTime(
+                                          DateTime.now().year,
+                                          DateTime.now().month,
+                                          DateTime.now().day,
+                                          task.endTime.hour,
+                                          task.endTime.minute,
+                                        ),
+                                      );
+
                                   return Container(
                                     margin: EdgeInsets.only(bottom: 12),
                                     decoration: BoxDecoration(
@@ -137,6 +148,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                                     child: Padding(
                                       padding: const EdgeInsets.all(6),
                                       child: Column(
+                                        spacing: 6,
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
@@ -195,6 +207,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                                               context,
                                               task.endTime,
                                             ),
+                                            isFinished: isTaskFinished,
                                           ),
                                         ],
                                       ),
