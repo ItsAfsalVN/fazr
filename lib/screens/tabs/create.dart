@@ -35,26 +35,6 @@ class _CreateState extends State<Create> {
     super.dispose();
   }
 
-  void _selectStartDate(DateTime selectedDate) {
-    context.read<TaskProvider>().setStartingDate(selectedDate);
-  }
-
-  void _selectStartTime(TimeOfDay startTime) {
-    context.read<TaskProvider>().setStartTime(startTime);
-  }
-
-  void _selectEndTime(TimeOfDay endTime) {
-    context.read<TaskProvider>().setEndTime(endTime);
-  }
-
-  void _setAlertAtStart(bool value) {
-    context.read<TaskProvider>().setAlertAtStart(value);
-  }
-
-  void _setAlertAtEnd(bool value) {
-    context.read<TaskProvider>().setAlertAtEnd(value);
-  }
-
   void _createTask() async {
     final taskProvider = context.read<TaskProvider>();
 
