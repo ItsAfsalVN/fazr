@@ -1,6 +1,6 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fazr/models/completed_Task_model.dart';
 import 'package:flutter/material.dart';
+import '../services/database_services.dart'; // Import the new service file
 
 class CompletedTaskProvider extends ChangeNotifier {
   List<CompletedTask> _completedTasks = [];
@@ -13,9 +13,7 @@ class CompletedTaskProvider extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
     try {
-      final QuerySnapshot querySnapshot = await FirebaseFirestore.instance
-          .collection('completed_tasks')
-          .get();
+      final querySnapshot = await fetchCompletedTasksFromFireStore();
 
       _completedTasks = querySnapshot.docs.map((doc) {
         return CompletedTask.fromFirestore(doc.data() as Map<String, dynamic>);

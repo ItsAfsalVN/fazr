@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fazr/models/completed_Task_model.dart';
 import 'package:fazr/models/task_model.dart';
 import 'package:fazr/providers/completed_task_provider.dart';
@@ -124,15 +123,13 @@ class TaskProvider extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       print(e);
-      throw e;
+      rethrow;
     }
   }
 
   Future<void> fetchAllTasks() async {
     try {
-      QuerySnapshot querySnapshot = await FirebaseFirestore.instance
-          .collection('tasks')
-          .get();
+      final querySnapshot = await fetchAllTasksFromFireStore();
 
       _tasks = querySnapshot.docs.map((doc) {
         return TaskModel.fromJson(doc.id, doc.data() as Map<String, dynamic>);
@@ -180,8 +177,7 @@ class TaskProvider extends ChangeNotifier {
             break;
 
           case 'weekly':
-            if (normalizedStartingDate.weekday ==
-                normalizedTargetDate.weekday) {
+            if (normalizedStartingDate.weekday == normalizedTargetDate.weekday) {
               tasksForDate.add(task);
             }
             break;
@@ -210,22 +206,14 @@ class TaskProvider extends ChangeNotifier {
 
     try {
       if (isCompleted) {
-        await FirebaseFirestore.instance.collection('completed_tasks').add({
-          'taskId': taskId,
-          'completionDate': Timestamp.fromDate(date),
-        });
-
+        await addCompletedTaskInFireStore(taskId, date);
         completedTaskProvider.addCompletedTask(
           CompletedTask(taskId: taskId, completionDate: date),
         );
       } else {
-        final querySnapshot = await FirebaseFirestore.instance
-            .collection('completed_tasks')
-            .where('taskId', isEqualTo: taskId)
-            .where('completionDate', isEqualTo: Timestamp.fromDate(date))
-            .get();
+        final querySnapshot = await getCompletedTaskFromFireStore(taskId, date);
         for (var doc in querySnapshot.docs) {
-          await doc.reference.delete();
+          await deleteCompletedTaskFromFireStore(doc.id);
         }
         completedTaskProvider.removeCompletedTask(taskId, date);
       }
@@ -238,10 +226,7 @@ class TaskProvider extends ChangeNotifier {
     final jsonTask = toJson(_temporaryTask);
 
     try {
-      await FirebaseFirestore.instance
-          .collection('tasks')
-          .doc(taskId)
-          .update(jsonTask);
+      await updateTaskInFireStore(taskId, jsonTask);
 
       final taskIndex = _tasks.indexWhere((task) => task.uid == taskId);
 
@@ -263,30 +248,24 @@ class TaskProvider extends ChangeNotifier {
 
       notifyListeners();
     } catch (e) {
-      throw e;
+      rethrow;
     }
   }
 
   Future<void> deleteTask(String taskId) async {
     try {
-      await FirebaseFirestore.instance.collection('tasks').doc(taskId).delete();
-
+      await deleteTaskFromFireStore(taskId);
       _tasks.removeWhere((task) => task.uid == taskId);
-
       notifyListeners();
     } catch (e) {
-      print("Error deleting task: $e");
-      throw e;
+      rethrow;
     }
   }
 
   Future<void> deleteTaskInstance(String taskId, DateTime date) async {
     try {
       final dateKey = date.toIso8601String().split('T')[0];
-
-      await FirebaseFirestore.instance.collection('tasks').doc(taskId).update({
-        'deletedInstances': FieldValue.arrayUnion([dateKey]),
-      });
+      await deleteInstanceInFireStore(taskId, date);
 
       final taskIndex = _tasks.indexWhere((t) => t.uid == taskId);
       if (taskIndex != -1) {
@@ -299,10 +278,9 @@ class TaskProvider extends ChangeNotifier {
           deletedInstances: updatedDeletedInstances,
         );
       }
-
       notifyListeners();
     } catch (e) {
-      throw Exception('Failed to delete task instance: $e');
+      rethrow;
     }
   }
 }
