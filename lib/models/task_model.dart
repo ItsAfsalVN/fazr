@@ -10,6 +10,7 @@ class TaskModel {
   final bool alertAtStart;
   final bool alertAtEnd;
   final String repeat;
+  final List<String>? deletedInstances; 
 
   TaskModel({
     this.uid,
@@ -20,9 +21,9 @@ class TaskModel {
     required this.endTime,
     required this.alertAtStart,
     required this.alertAtEnd,
-    required this.repeat
+    required this.repeat,
+    this.deletedInstances,
   });
-
 
   factory TaskModel.fromJson(String id, Map<String, dynamic> data) {
     return TaskModel(
@@ -41,10 +42,26 @@ class TaskModel {
       alertAtStart: data['alertAtStart'] as bool,
       alertAtEnd: data['alertAtEnd'] as bool,
       repeat: data['repeat'] as String,
+      deletedInstances: data['deletedInstances'] != null
+          ? List<String>.from(data['deletedInstances'])
+          : null,
     );
   }
 
-  // The copyWith method
+  Map<String, dynamic> toJson() {
+    return {
+      'title': title,
+      'description': description,
+      'startingDate': startingDate.toIso8601String(),
+      'startTime': '${startTime.hour}:${startTime.minute}',
+      'endTime': '${endTime.hour}:${endTime.minute}',
+      'alertAtStart': alertAtStart,
+      'alertAtEnd': alertAtEnd,
+      'repeat': repeat,
+      'deletedInstances': deletedInstances ?? [],
+    };
+  }
+
   TaskModel copyWith({
     String? uid,
     String? title,
@@ -54,7 +71,8 @@ class TaskModel {
     TimeOfDay? endTime,
     bool? alertAtStart,
     bool? alertAtEnd,
-    String? repeat
+    String? repeat,
+    List<String>? deletedInstances,
   }) {
     return TaskModel(
       uid: uid ?? this.uid,
@@ -65,7 +83,8 @@ class TaskModel {
       endTime: endTime ?? this.endTime,
       alertAtStart: alertAtStart ?? this.alertAtStart,
       alertAtEnd: alertAtEnd ?? this.alertAtEnd,
-      repeat: repeat ?? this.repeat
+      repeat: repeat ?? this.repeat,
+      deletedInstances: deletedInstances ?? this.deletedInstances,
     );
   }
 }

@@ -56,63 +56,162 @@ class _TaskCardState extends State<TaskCard> {
             ),
           ),
           Dismissible(
-            key: UniqueKey(),
+            key: ValueKey(widget.task.uid),
             direction: DismissDirection.endToStart,
             confirmDismiss: (direction) async {
-              final result = await showDialog<bool>(
-                context: context,
-                builder: (BuildContext dialogContext) {
-                  return AlertDialog(
-                    title: const Text('Delete Task'),
-                    content: const Text(
-                      'Are you sure you want to delete this task?',
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.of(dialogContext).pop(false),
-                        child: const Text('Cancel'),
+              // For recurring tasks, show options
+              if (widget.task.repeat != 'once') {
+                final result = await showDialog<String>(
+                  context: context,
+                  builder: (BuildContext dialogContext) {
+                    return AlertDialog(
+                      title: const Text('Delete Task'),
+                      content: const Text(
+                        'This is a recurring task. What would you like to delete?',
                       ),
-                      TextButton(
-                        onPressed: () => Navigator.of(dialogContext).pop(true),
-                        style: TextButton.styleFrom(
-                          foregroundColor: colors.error,
+                      actions: [
+                        TextButton(
+                          onPressed: () =>
+                              Navigator.of(dialogContext).pop('cancel'),
+                          child: const Text('Cancel'),
                         ),
-                        child: const Text('Delete'),
-                      ),
-                    ],
-                  );
-                },
-              );
-
-              if (result == true) {
-                setState(() {
-                  _isDismissed = true;
-                });
-
-                try {
-                  await taskProvider.deleteTask(widget.task.uid!);
-                  if (mounted) {
-                    showSnackBar(
-                      context,
-                      SnackBarType.success,
-                      'Task deleted successfully',
+                        TextButton(
+                          onPressed: () =>
+                              Navigator.of(dialogContext).pop('instance'),
+                          child: const Text('This Instance'),
+                        ),
+                        TextButton(
+                          onPressed: () =>
+                              Navigator.of(dialogContext).pop('all'),
+                          style: TextButton.styleFrom(
+                            foregroundColor: colors.error,
+                          ),
+                          child: const Text('All Instances'),
+                        ),
+                      ],
                     );
+                  },
+                );
+
+                if (result == 'instance') {
+                  setState(() {
+                    _isDismissed = true;
+                  });
+
+                  try {
+                    await taskProvider.deleteTaskInstance(
+                      widget.task.uid!,
+                      widget.selectedDate,
+                    );
+                    if (mounted) {
+                      showSnackBar(
+                        context,
+                        SnackBarType.success,
+                        'Task instance deleted successfully',
+                      );
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      setState(() {
+                        _isDismissed = false;
+                      });
+                      showSnackBar(
+                        context,
+                        SnackBarType.error,
+                        'Failed to delete task instance: ${e.toString()}',
+                      );
+                    }
                   }
-                } catch (e) {
-                  if (mounted) {
-                    setState(() {
-                      _isDismissed = false;
-                    });
-                    showSnackBar(
-                      context,
-                      SnackBarType.error,
-                      'Failed to delete task: ${e.toString()}',
+                  return true;
+                } else if (result == 'all') {
+                  setState(() {
+                    _isDismissed = true;
+                  });
+
+                  try {
+                    await taskProvider.deleteTask(widget.task.uid!);
+                    if (mounted) {
+                      showSnackBar(
+                        context,
+                        SnackBarType.success,
+                        'Task deleted successfully',
+                      );
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      setState(() {
+                        _isDismissed = false;
+                      });
+                      showSnackBar(
+                        context,
+                        SnackBarType.error,
+                        'Failed to delete task: ${e.toString()}',
+                      );
+                    }
+                  }
+                  return true;
+                } else {
+                  return false;
+                }
+              } else {
+                // For one-time tasks, show simple confirmation
+                final result = await showDialog<bool>(
+                  context: context,
+                  builder: (BuildContext dialogContext) {
+                    return AlertDialog(
+                      title: const Text('Delete Task'),
+                      content: const Text(
+                        'Are you sure you want to delete this task?',
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () =>
+                              Navigator.of(dialogContext).pop(false),
+                          child: const Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () =>
+                              Navigator.of(dialogContext).pop(true),
+                          style: TextButton.styleFrom(
+                            foregroundColor: colors.error,
+                          ),
+                          child: const Text('Delete'),
+                        ),
+                      ],
                     );
+                  },
+                );
+
+                if (result == true) {
+                  setState(() {
+                    _isDismissed = true;
+                  });
+
+                  try {
+                    await taskProvider.deleteTask(widget.task.uid!);
+                    if (mounted) {
+                      showSnackBar(
+                        context,
+                        SnackBarType.success,
+                        'Task deleted successfully',
+                      );
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      setState(() {
+                        _isDismissed = false;
+                      });
+                      showSnackBar(
+                        context,
+                        SnackBarType.error,
+                        'Failed to delete task: ${e.toString()}',
+                      );
+                    }
                   }
                 }
-              }
 
-              return result;
+                return result ?? false;
+              }
             },
             child: Container(
               decoration: BoxDecoration(

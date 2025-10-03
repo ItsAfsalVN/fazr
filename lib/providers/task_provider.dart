@@ -152,8 +152,13 @@ class TaskProvider extends ChangeNotifier {
       targetDate.month,
       targetDate.day,
     );
+    final dateKey = normalizedTargetDate.toIso8601String().split('T')[0];
 
     for (var task in _tasks) {
+      if (task.deletedInstances?.contains(dateKey) ?? false) {
+        continue;
+      }
+
       final normalizedStartingDate = DateTime(
         task.startingDate.year,
         task.startingDate.month,
@@ -225,8 +230,7 @@ class TaskProvider extends ChangeNotifier {
         completedTaskProvider.removeCompletedTask(taskId, date);
       }
     } catch (e) {
-      print("Error updating task completion: $e");
-      throw e;
+      rethrow;
     }
   }
 
@@ -273,6 +277,32 @@ class TaskProvider extends ChangeNotifier {
     } catch (e) {
       print("Error deleting task: $e");
       throw e;
+    }
+  }
+
+  Future<void> deleteTaskInstance(String taskId, DateTime date) async {
+    try {
+      final dateKey = date.toIso8601String().split('T')[0];
+
+      await FirebaseFirestore.instance.collection('tasks').doc(taskId).update({
+        'deletedInstances': FieldValue.arrayUnion([dateKey]),
+      });
+
+      final taskIndex = _tasks.indexWhere((t) => t.uid == taskId);
+      if (taskIndex != -1) {
+        final task = _tasks[taskIndex];
+        final updatedDeletedInstances = List<String>.from(
+          task.deletedInstances ?? [],
+        )..add(dateKey);
+
+        _tasks[taskIndex] = task.copyWith(
+          deletedInstances: updatedDeletedInstances,
+        );
+      }
+
+      notifyListeners();
+    } catch (e) {
+      throw Exception('Failed to delete task instance: $e');
     }
   }
 }

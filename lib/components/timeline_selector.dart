@@ -19,9 +19,6 @@ class TimelineSelector extends StatelessWidget {
       initialDate: today,
       onDateChange: (selectedDate) {
         dateProvider.setDate(selectedDate);
-        print(
-          "Selected date : ${dateProvider.date}",
-        );
       },
       dayProps: EasyDayProps(
         height: 90,
