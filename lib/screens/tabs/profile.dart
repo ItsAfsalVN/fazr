@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class Profile extends StatelessWidget {
@@ -18,7 +17,6 @@ class Profile extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
-                  // Added to prevent overflow
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     spacing: 10,
@@ -42,7 +40,7 @@ class Profile extends StatelessWidget {
                           color: colors.primary.withValues(alpha: 0.7),
                           fontSize: 16,
                         ),
-                        overflow: TextOverflow.ellipsis, // Handle long emails
+                        overflow: TextOverflow.ellipsis, 
                       ),
                     ],
                   ),

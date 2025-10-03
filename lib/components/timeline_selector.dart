@@ -11,7 +11,7 @@ class TimelineSelector extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
     final dateProvider = Provider.of<DateProvider>(
       context,
-    ); // Remove listen: false
+    ); 
     final date = DateTime.now();
     final today = DateTime(date.year, date.month, date.day);
 

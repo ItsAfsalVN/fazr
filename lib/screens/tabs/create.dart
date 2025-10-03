@@ -18,21 +18,18 @@ class Create extends StatefulWidget {
 
 class _CreateState extends State<Create> {
   bool isLoading = false;
-  // Create controllers for your input fields
   late TextEditingController _titleController;
   late TextEditingController _descriptionController;
 
   @override
   void initState() {
     super.initState();
-    // Initialize the controllers
     _titleController = TextEditingController();
     _descriptionController = TextEditingController();
   }
 
   @override
   void dispose() {
-    // Dispose the controllers when the widget is removed from the tree
     _titleController.dispose();
     _descriptionController.dispose();
     super.dispose();

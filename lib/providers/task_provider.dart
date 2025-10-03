@@ -23,7 +23,6 @@ class TaskProvider extends ChangeNotifier {
 
   CalendarFormat _calendarFormat = CalendarFormat.month;
 
-  // Getters
   String get title => _temporaryTask.title;
   String get description => _temporaryTask.description;
   DateTime get startingDate => _temporaryTask.startingDate;

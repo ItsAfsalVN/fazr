@@ -50,7 +50,6 @@ class CustomCalendar extends StatelessWidget {
           final now = DateTime.now();
           final today = DateTime(now.year, now.month, now.day);
           if (selectedDay.isBefore(today)) {
-            // Optional: Show a message to the user
             return;
           }
 

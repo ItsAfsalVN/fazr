@@ -1,5 +1,3 @@
-// lib/components/custom_progress_bar.dart
-
 import 'package:flutter/material.dart';
 
 class CustomProgressBar extends StatelessWidget {

@@ -1,5 +1,3 @@
-// lib/components/task_card.dart
-
 import 'package:fazr/components/edit_task_modal.dart';
 import 'package:fazr/components/custom_progress_bar.dart';
 import 'package:fazr/models/task_model.dart';

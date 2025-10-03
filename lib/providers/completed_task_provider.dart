@@ -1,6 +1,6 @@
 import 'package:fazr/models/completed_Task_model.dart';
 import 'package:flutter/material.dart';
-import '../services/database_services.dart'; // Import the new service file
+import '../services/database_services.dart';
 
 class CompletedTaskProvider extends ChangeNotifier {
   List<CompletedTask> _completedTasks = [];

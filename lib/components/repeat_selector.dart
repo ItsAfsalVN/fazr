@@ -9,7 +9,6 @@ class RepeatSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    // Watch the TaskProvider for the current repeat value.
     final selectedRepeat = context.watch<TaskProvider>().repeat;
 
     return Container(
@@ -29,7 +28,6 @@ class RepeatSelector extends StatelessWidget {
 
             return GestureDetector(
               onTap: () {
-                // Update the provider state directly.
                 context.read<TaskProvider>().setRepeat(repeat.toLowerCase());
               },
               child: Container(

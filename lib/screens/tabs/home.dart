@@ -1,15 +1,10 @@
 import 'dart:async';
 import 'package:fazr/components/category_select.dart';
-import 'package:fazr/components/custom_progress_bar.dart';
-import 'package:fazr/components/edit_task_modal.dart';
 import 'package:fazr/components/task_card.dart';
 import 'package:fazr/components/timeline_selector.dart';
 import 'package:fazr/providers/date_provider.dart';
 import 'package:fazr/providers/task_provider.dart';
-import 'package:fazr/providers/completed_task_provider.dart'; // Import the new provider
-import 'package:fazr/utils/calculateProgress.dart';
-import 'package:fazr/utils/format_time.dart';
-import 'package:fazr/utils/show_snackbar.dart';
+import 'package:fazr/providers/completed_task_provider.dart'; 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -51,10 +46,6 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       context.read<TaskProvider>().fetchAllTasks();
       context.read<CompletedTaskProvider>().fetchCompletedTasks();
     }
-  }
-
-  Future<void> _refreshTasks() async {
-    await context.read<TaskProvider>().fetchAllTasks();
   }
 
   @override

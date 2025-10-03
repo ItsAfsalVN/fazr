@@ -1,5 +1,4 @@
 import 'dart:async';
-// import 'package:fazr/screens/auth/sign_up.dart';
 import 'package:fazr/screens/tabs/dashboard.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
