@@ -183,6 +183,7 @@ class _TaskCardState extends State<TaskCard> {
                           startTime: formatTime(context, widget.task.startTime),
                           endTime: formatTime(context, widget.task.endTime),
                           isFinished: widget.isTaskFinished,
+                          selectedDate: widget.selectedDate,
                         ),
                       ],
                     ),

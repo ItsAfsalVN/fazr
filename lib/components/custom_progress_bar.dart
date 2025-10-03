@@ -7,6 +7,7 @@ class CustomProgressBar extends StatelessWidget {
   final String startTime;
   final String endTime;
   final bool isFinished;
+  final DateTime selectedDate;
 
   const CustomProgressBar({
     super.key,
@@ -14,18 +15,27 @@ class CustomProgressBar extends StatelessWidget {
     required this.startTime,
     required this.endTime,
     required this.isFinished,
+    required this.selectedDate,
   });
+
+  bool _isSameDay(DateTime date1, DateTime date2) {
+    return date1.year == date2.year &&
+        date1.month == date2.month &&
+        date1.day == date2.day;
+  }
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final backgroundColor = isFinished ? colors.error : colors.primary;
+    final isToday = _isSameDay(DateTime.now(), selectedDate);
 
     return LayoutBuilder(
       builder: (context, constraints) {
         final progressWidth = constraints.maxWidth * value.clamp(0.0, 1.0);
-        final startTextCovered = progressWidth > 44;
-        final endTextCovered = progressWidth > (constraints.maxWidth - 44);
+        final startTextCovered = isToday && progressWidth > 44;
+        final endTextCovered =
+            isToday && progressWidth > (constraints.maxWidth - 44);
 
         final startTextColor = startTextCovered
             ? const Color(0xffD6E3DA)
@@ -46,14 +56,15 @@ class CustomProgressBar extends StatelessWidget {
               ),
             ),
 
-            Container(
-              height: 16,
-              width: progressWidth,
-              decoration: BoxDecoration(
-                color: backgroundColor,
-                borderRadius: BorderRadius.circular(12),
+            if (isToday)
+              Container(
+                height: 16,
+                width: progressWidth,
+                decoration: BoxDecoration(
+                  color: backgroundColor,
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
-            ),
 
             Positioned(
               left: 6,
