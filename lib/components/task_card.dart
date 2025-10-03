@@ -59,7 +59,6 @@ class _TaskCardState extends State<TaskCard> {
             key: ValueKey(widget.task.uid),
             direction: DismissDirection.endToStart,
             confirmDismiss: (direction) async {
-              // For recurring tasks, show options
               if (widget.task.repeat != 'once') {
                 final result = await showDialog<String>(
                   context: context,
@@ -154,7 +153,6 @@ class _TaskCardState extends State<TaskCard> {
                   return false;
                 }
               } else {
-                // For one-time tasks, show simple confirmation
                 final result = await showDialog<bool>(
                   context: context,
                   builder: (BuildContext dialogContext) {
@@ -217,6 +215,15 @@ class _TaskCardState extends State<TaskCard> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    blurRadius: 5,
+                    blurStyle: BlurStyle.normal,
+                    color: const Color.fromARGB(255, 218, 218, 218),
+                    offset: Offset(0, 0),
+                    spreadRadius: 1,
+                  ),
+                ],
               ),
               child: Material(
                 color: Colors.transparent,

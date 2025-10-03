@@ -37,10 +37,8 @@ class CustomProgressBar extends StatelessWidget {
         final endTextCovered =
             isToday && progressWidth > (constraints.maxWidth - 44);
 
-        final startTextColor = startTextCovered
-            ? Colors.white
-            : backgroundColor;
-        final endTextColor = endTextCovered ? Colors.white : backgroundColor;
+        final startTextColor = startTextCovered ? Colors.white : colors.primary;
+        final endTextColor = endTextCovered ? Colors.white : colors.primary;
 
         return Stack(
           alignment: Alignment.centerLeft,
@@ -51,6 +49,7 @@ class CustomProgressBar extends StatelessWidget {
               decoration: BoxDecoration(
                 color: const Color(0xffD6E3DA),
                 borderRadius: BorderRadius.circular(12),
+                
               ),
             ),
 
