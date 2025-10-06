@@ -14,34 +14,62 @@ Future<String?> uploadAvatar(XFile image, String userId) async {
     return null;
   }
 
-  final String extension = path.extension(image.path);
-  final String fileName = '$userId$extension';
-  final String uploadPath = 'avatars/$fileName';
-
-  final Uri url = Uri.parse(
-    'https://api.github.com/repos/$owner/$repo/contents/$uploadPath',
+  final String newExtension = path.extension(image.path);
+  final String newFileName = '$userId$newExtension';
+  final String newUploadPath = 'avatars/$newFileName';
+  final Uri newFileUrl = Uri.parse(
+    'https://api.github.com/repos/$owner/$repo/contents/$newUploadPath',
   );
+
   final Map<String, String> headers = {
     'Authorization': 'Bearer $accessToken',
     'Accept': 'application/vnd.github+json',
     'Content-Type': 'application/json',
   };
 
-  String? existingFileSha;
+  String? oldFilePath;
+  String? oldFileSha;
 
+  final Uri directoryUrl = Uri.parse(
+    'https://api.github.com/repos/$owner/$repo/contents/avatars',
+  );
   try {
-    final getResponse = await http.get(url, headers: headers);
-    if (getResponse.statusCode == 200) {
-      final responseData = jsonDecode(getResponse.body);
-      existingFileSha = responseData['sha'];
-      print(
-        'ℹ️ Existing avatar found. Preparing to update file with SHA: $existingFileSha',
-      );
-    } else {
-      print('ℹ️ No existing avatar found. A new one will be created.');
+    final response = await http.get(directoryUrl, headers: headers);
+    if (response.statusCode == 200) {
+      final List<dynamic> files = jsonDecode(response.body);
+      for (final file in files) {
+        if (file['name']?.startsWith(userId) == true) {
+          oldFilePath = file['path'];
+          oldFileSha = file['sha'];
+          print('ℹ️ Found existing avatar at path: $oldFilePath');
+          break;
+        }
+      }
     }
   } catch (e) {
-    print("Could not check for existing file, proceeding with create: $e");
+    print("Could not check for existing files: $e");
+  }
+
+  if (oldFilePath != null &&
+      oldFileSha != null &&
+      oldFilePath != newUploadPath) {
+    print('ℹ️ New avatar has a different extension. Deleting old one first.');
+    try {
+      final deleteUrl = Uri.parse(
+        'https://api.github.com/repos/$owner/$repo/contents/$oldFilePath',
+      );
+      final deleteBody = jsonEncode({
+        'message': 'chore: deleting old avatar for user $userId',
+        'sha': oldFileSha,
+        'committer': {'name': 'Fazr App', 'email': 'bot@fazr.app'},
+      });
+      await http.delete(deleteUrl, headers: headers, body: deleteBody);
+      oldFileSha = null;
+    } catch (e) {
+      print(
+        '❌ Failed to delete old avatar, proceeding with upload anyway. Error: $e',
+      );
+    }
   }
 
   try {
@@ -54,13 +82,17 @@ Future<String?> uploadAvatar(XFile image, String userId) async {
       'committer': {'name': 'Fazr App', 'email': 'bot@fazr.app'},
     };
 
-    if (existingFileSha != null) {
-      requestData['sha'] = existingFileSha;
+    if (oldFilePath == newUploadPath && oldFileSha != null) {
+      requestData['sha'] = oldFileSha;
     }
 
     final String requestBody = jsonEncode(requestData);
 
-    final response = await http.put(url, headers: headers, body: requestBody);
+    final response = await http.put(
+      newFileUrl,
+      headers: headers,
+      body: requestBody,
+    );
 
     if (response.statusCode == 201 || response.statusCode == 200) {
       final Map<String, dynamic> responseData = jsonDecode(response.body);
@@ -74,6 +106,44 @@ Future<String?> uploadAvatar(XFile image, String userId) async {
     }
   } catch (e) {
     print('❌ An exception occurred during upload: $e');
+    return null;
+  }
+}
+
+
+Future<String?> getAvatarUrlFromGitHub(String userId) async {
+  if (accessToken == null || owner == null || repo == null) {
+    print("Error: Missing GitHub environment variables.");
+    return null;
+  }
+
+  final Uri url = Uri.parse('https://api.github.com/repos/$owner/$repo/contents/avatars');
+  final Map<String, String> headers = {
+    'Authorization': 'Bearer $accessToken',
+    'Accept': 'application/vnd.github+json',
+  };
+
+  try {
+    final response = await http.get(url, headers: headers);
+
+    if (response.statusCode == 200) {
+      final List<dynamic> files = jsonDecode(response.body);
+
+      for (final file in files) {
+        if (file is Map<String, dynamic> && file['name']?.startsWith(userId) == true) {
+          final downloadUrl = file['download_url'];
+          print('✅ Found GitHub avatar for $userId: $downloadUrl');
+          return downloadUrl; // Return the URL as soon as it's found
+        }
+      }
+      print('ℹ️ No avatar found on GitHub for user $userId.');
+      return null;
+    } else {
+      print('❌ Could not list avatars from GitHub. Status: ${response.statusCode}');
+      return null;
+    }
+  } catch (e) {
+    print('❌ An exception occurred while fetching avatar URL: $e');
     return null;
   }
 }

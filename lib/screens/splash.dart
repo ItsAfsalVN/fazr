@@ -4,6 +4,7 @@ import 'package:fazr/providers/user_provider.dart';
 import 'package:fazr/screens/auth/sign_in.dart';
 import 'package:fazr/screens/tabs/dashboard.dart';
 import 'package:fazr/services/database_services.dart';
+import 'package:fazr/services/storage_service.dart'; // Import storage service
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
@@ -58,7 +59,15 @@ class _SplashState extends State<Splash> with SingleTickerProviderStateMixin {
       UserModel? userModel = await getUserFromFireStore(firebaseUser.uid);
 
       if (userModel != null && mounted) {
-        Provider.of<UserProvider>(context, listen: false).setUser(userModel);
+        final String? githubAvatarUrl = await getAvatarUrlFromGitHub(
+          firebaseUser.uid,
+        );
+        final updatedUserModel = userModel.copyWith(avatar: githubAvatarUrl);
+
+        Provider.of<UserProvider>(
+          context,
+          listen: false,
+        ).setUser(updatedUserModel);
 
         Navigator.pushReplacement(
           context,

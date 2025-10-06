@@ -9,6 +9,7 @@ import 'package:fazr/screens/auth/sign_up.dart';
 import 'package:fazr/screens/tabs/dashboard.dart';
 import 'package:fazr/services/authentication_service.dart';
 import 'package:fazr/services/database_services.dart';
+import 'package:fazr/services/storage_service.dart'; // Import storage service
 import 'package:fazr/utils/show_snackbar.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -46,7 +47,14 @@ class _SignInState extends State<SignIn> {
         UserModel? userModel = await getUserFromFireStore(user.uid);
 
         if (userModel != null) {
-          context.read<UserProvider>().setUser(userModel);
+          // --- ADDED: Fetch latest avatar from GitHub ---
+          final String? githubAvatarUrl = await getAvatarUrlFromGitHub(
+            user.uid,
+          );
+          final updatedUserModel = userModel.copyWith(avatar: githubAvatarUrl);
+
+          context.read<UserProvider>().setUser(updatedUserModel);
+          // --- END OF CHANGE ---
 
           Navigator.pushAndRemoveUntil(
             context,
@@ -114,7 +122,6 @@ class _SignInState extends State<SignIn> {
                 const SizedBox(height: 40),
                 Column(
                   children: [
-                    // --- FIX 4: Connect controllers to InputFields ---
                     InputField(
                       label: 'Email',
                       hint: 'Enter your email',

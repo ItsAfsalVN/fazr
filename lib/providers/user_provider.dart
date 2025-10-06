@@ -13,7 +13,6 @@ class UserProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Updates just the avatar URL and notifies listeners
   void updateUserAvatar(String avatarUrl) {
     if (_user != null) {
       _user = _user!.copyWith(avatar: avatarUrl);
