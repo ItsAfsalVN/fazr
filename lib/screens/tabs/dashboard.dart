@@ -39,7 +39,7 @@ class _DashboardState extends State<Dashboard> {
           color: Colors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withValues(alpha: .1),
               blurRadius: 10,
               offset: Offset(0, -2),
             ),

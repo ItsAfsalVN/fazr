@@ -2,6 +2,7 @@ import 'package:fazr/firebase_options.dart';
 import 'package:fazr/providers/completed_task_provider.dart';
 import 'package:fazr/providers/date_provider.dart';
 import 'package:fazr/providers/task_provider.dart';
+import 'package:fazr/providers/user_provider.dart';
 import 'package:fazr/screens/splash.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -9,8 +10,8 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 
 void main(List<String> args) async {
-  await dotenv.load(fileName: ".env");
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const App());
 }
@@ -25,6 +26,7 @@ class App extends StatelessWidget {
         ChangeNotifierProvider(create: (ctx) => TaskProvider()),
         ChangeNotifierProvider(create: (ctx) => DateProvider()),
         ChangeNotifierProvider(create: (ctx) => CompletedTaskProvider()),
+        ChangeNotifierProvider(create: (ctx) => UserProvider()),
       ],
       child: MaterialApp(
         theme: ThemeData(

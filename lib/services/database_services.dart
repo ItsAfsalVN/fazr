@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:fazr/models/user_model.dart';
 
 final db = FirebaseFirestore.instance;
 
@@ -88,5 +89,25 @@ Future<QuerySnapshot> fetchCompletedTasksFromFireStore() async {
     return await db.collection('completed_tasks').get();
   } catch (e) {
     throw Exception("Error fetching completed tasks: $e");
+  }
+}
+
+Future<void> createUserInFireStore(UserModel user) async {
+  try {
+    await db.collection('users').doc(user.id).set(user.toJson());
+  } catch (e) {
+    throw Exception("Failed to create user in Firestore: $e");
+  }
+}
+
+Future<UserModel?> getUserFromFireStore(String uid) async {
+  try {
+    DocumentSnapshot doc = await db.collection('users').doc(uid).get();
+    if (doc.exists) {
+      return UserModel.fromJson(doc.data() as Map<String, dynamic>);
+    }
+    return null;
+  } catch (error) {
+    throw Exception("Failed to get user from firestore: $error");
   }
 }

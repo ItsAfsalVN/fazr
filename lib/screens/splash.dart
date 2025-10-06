@@ -1,7 +1,13 @@
 import 'dart:async';
+import 'package:fazr/models/user_model.dart';
+import 'package:fazr/providers/user_provider.dart';
+import 'package:fazr/screens/auth/sign_in.dart';
 import 'package:fazr/screens/tabs/dashboard.dart';
+import 'package:fazr/services/database_services.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:provider/provider.dart';
 
 class Splash extends StatefulWidget {
   const Splash({super.key});
@@ -24,18 +30,52 @@ class _SplashState extends State<Splash> with SingleTickerProviderStateMixin {
       duration: const Duration(seconds: 3),
     );
 
-    _scaleAnimation = Tween<double>(begin: .5, end: 1.0).animate(_controller);
-    _opacityAnimation = Tween<double>(begin: 1.0, end: .5).animate(_controller);
+    _scaleAnimation = Tween<double>(
+      begin: .5,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+    _opacityAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeIn));
 
     _controller.forward();
 
-    Timer(
-      const Duration(seconds: 3),
-      () => Navigator.pushReplacement(
+    _navigateUser();
+  }
+
+  Future<void> _navigateUser() async {
+    var results = await Future.wait([
+      Future.delayed(const Duration(seconds: 3)),
+      FirebaseAuth.instance.authStateChanges().first,
+    ]);
+
+    if (!mounted) return;
+
+    final firebaseUser = results[1] as User?;
+
+    if (firebaseUser != null) {
+      UserModel? userModel = await getUserFromFireStore(firebaseUser.uid);
+
+      if (userModel != null && mounted) {
+        Provider.of<UserProvider>(context, listen: false).setUser(userModel);
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const Dashboard()),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const SignIn()),
+        );
+      }
+    } else {
+      Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const Dashboard()),
-      ),
-    );
+        MaterialPageRoute(builder: (context) => const SignIn()),
+      );
+    }
   }
 
   @override
