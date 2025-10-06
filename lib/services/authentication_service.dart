@@ -13,3 +13,15 @@ Future<User?> signUpWithEmailAndPassword({
 
   return credential.user;
 }
+
+Future<User?> signInWithEmailAndPassword({
+  required String email,
+  required String password,
+}) async {
+  UserCredential credential = await _auth.signInWithEmailAndPassword(
+    email: email,
+    password: password,
+  );
+  return credential.user;
+}
+

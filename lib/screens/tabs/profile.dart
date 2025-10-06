@@ -1,6 +1,9 @@
 import 'package:fazr/models/user_model.dart';
 import 'package:fazr/providers/user_provider.dart';
+import 'package:fazr/screens/auth/sign_in.dart';
 import 'package:fazr/services/storage_service.dart';
+import 'package:fazr/utils/show_snackbar.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -15,7 +18,26 @@ class Profile extends StatefulWidget {
 class _ProfileState extends State<Profile> {
   bool _isUploading = false;
 
-  /// Handles picking an image, uploading it, and updating the state.
+  void _handleLogOut() async {
+    try {
+      await FirebaseAuth.instance.signOut();
+
+      if (!mounted) return;
+
+      context.read<UserProvider>().clearUser();
+
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const SignIn()),
+        (route) => false,
+      );
+    } catch (error) {
+      if (mounted) {
+        showSnackBar(context, SnackBarType.error, "Failed to logout $error");
+      }
+    }
+  }
+
   Future<void> handleAvatarTap() async {
     final userProvider = context.read<UserProvider>();
     final user = userProvider.user;
@@ -37,8 +59,6 @@ class _ProfileState extends State<Profile> {
       final String? downloadUrl = await uploadAvatar(image, user.id);
 
       if (downloadUrl != null && mounted) {
-        // IMPORTANT: Also save this URL to your user's document in Firestore!
-        // For example: await DatabaseService().updateUserAvatar(user.id, downloadUrl);
         userProvider.updateUserAvatar(downloadUrl);
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -75,7 +95,6 @@ class _ProfileState extends State<Profile> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- USER INFO AND AVATAR SECTION ---
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -171,7 +190,7 @@ class _ProfileState extends State<Profile> {
                         'Logout',
                         style: TextStyle(color: colors.error, fontSize: 16),
                       ),
-                      onTap: () {},
+                      onTap: _handleLogOut,
                     ),
                   ],
                 ),
