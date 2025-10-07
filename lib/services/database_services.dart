@@ -100,6 +100,15 @@ Future<void> createUserInFireStore(UserModel user) async {
   }
 }
 
+Future<void> updateUserInFirestore(String userId, Map<String, dynamic> data) async {
+  try {
+    await db.collection('users').doc(userId).update(data);
+  } catch (e) {
+    throw Exception("Failed to update user in Firestore: $e");
+  }
+}
+
+
 Future<UserModel?> getUserFromFireStore(String uid) async {
   try {
     DocumentSnapshot doc = await db.collection('users').doc(uid).get();

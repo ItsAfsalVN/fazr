@@ -20,6 +20,13 @@ class UserProvider extends ChangeNotifier {
     }
   }
 
+  void updateUserName(String newFullName) {
+    if (_user != null) {
+      _user = _user!.copyWith(fullname: newFullName);
+      notifyListeners();
+    }
+  }
+
   void clearUser() {
     _user = null;
     notifyListeners();

@@ -4,7 +4,7 @@ import 'package:fazr/providers/user_provider.dart';
 import 'package:fazr/screens/auth/sign_in.dart';
 import 'package:fazr/screens/tabs/dashboard.dart';
 import 'package:fazr/services/database_services.dart';
-import 'package:fazr/services/storage_service.dart'; // Import storage service
+import 'package:fazr/services/storage_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';

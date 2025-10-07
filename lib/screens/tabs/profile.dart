@@ -1,7 +1,9 @@
+import 'package:fazr/components/edit_profile_modal.dart';
 import 'package:fazr/models/user_model.dart';
 import 'package:fazr/providers/user_provider.dart';
 import 'package:fazr/screens/auth/sign_in.dart';
 import 'package:fazr/services/storage_service.dart';
+import 'package:fazr/utils/show_confirm_box.dart';
 import 'package:fazr/utils/show_snackbar.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -20,17 +22,24 @@ class _ProfileState extends State<Profile> {
 
   void _handleLogOut() async {
     try {
-      await FirebaseAuth.instance.signOut();
-
-      if (!mounted) return;
-
-      context.read<UserProvider>().clearUser();
-
-      Navigator.pushAndRemoveUntil(
+      bool choice = await showConfirmationDialog(
         context,
-        MaterialPageRoute(builder: (context) => const SignIn()),
-        (route) => false,
+        title: 'Logout?',
+        content: 'Do you want to logout of Fazr?',
       );
+      if (choice) {
+        await FirebaseAuth.instance.signOut();
+
+        if (!mounted) return;
+
+        context.read<UserProvider>().clearUser();
+
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const SignIn()),
+          (route) => false,
+        );
+      }
     } catch (error) {
       if (mounted) {
         showSnackBar(context, SnackBarType.error, "Failed to logout $error");
@@ -174,17 +183,17 @@ class _ProfileState extends State<Profile> {
                         'Edit profile',
                         style: TextStyle(fontSize: 16, color: colors.primary),
                       ),
-                      onTap: () {},
+                      onTap: () {
+                        showModalBottomSheet(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return EditProfileModal();
+                          },
+                        );
+                      },
                     ),
                     Divider(height: 1, thickness: .5, color: colors.primary),
-                    ListTile(
-                      title: Text(
-                        'Notification',
-                        style: TextStyle(color: colors.primary, fontSize: 16),
-                      ),
-                      onTap: () {},
-                    ),
-                    Divider(height: 1, thickness: .5, color: colors.primary),
+
                     ListTile(
                       title: Text(
                         'Logout',

@@ -12,7 +12,7 @@ class InputField extends StatelessWidget {
     this.maxlines,
     required this.hint,
     this.controller,
-    this.onChanged
+    this.onChanged,
   });
   @override
   Widget build(BuildContext context) {

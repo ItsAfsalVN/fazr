@@ -3,7 +3,7 @@ import 'package:fazr/components/custom_progress_bar.dart';
 import 'package:fazr/models/task_model.dart';
 import 'package:fazr/providers/task_provider.dart';
 import 'package:fazr/utils/show_snackbar.dart';
-import 'package:fazr/utils/calculateProgress.dart';
+import 'package:fazr/utils/calculate_progress.dart';
 import 'package:fazr/utils/format_time.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
