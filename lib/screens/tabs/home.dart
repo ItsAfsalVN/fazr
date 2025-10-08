@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:fazr/components/category_select.dart';
 import 'package:fazr/components/task_card.dart';
 import 'package:fazr/components/timeline_selector.dart';
+import 'package:fazr/models/task_model.dart';
 import 'package:fazr/providers/date_provider.dart';
 import 'package:fazr/providers/task_provider.dart';
 import 'package:fazr/providers/completed_task_provider.dart';
@@ -17,6 +18,7 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> with WidgetsBindingObserver {
   Timer? _timer;
+  String _selectedCategory = 'All';
 
   @override
   void initState() {
@@ -48,6 +50,12 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     }
   }
 
+  void _onCategorySelected(String category) {
+    setState(() {
+      _selectedCategory = category;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
@@ -58,7 +66,6 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Column(
-              spacing: 16,
               children: [
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -76,10 +83,15 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                     ],
                   ),
                 ),
+                const SizedBox(height: 16),
                 const TimelineSelector(),
+                const SizedBox(height: 16),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: CategorySelect(),
+                  child: CategorySelect(
+                    selectedCategory: _selectedCategory,
+                    onCategorySelected: _onCategorySelected,
+                  ),
                 ),
               ],
             ),
@@ -95,10 +107,45 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                           child,
                         ) {
                           final selectedDate = dateProvider.date;
-                          final tasksForSelectedDate = taskProvider
-                              .getTasksForDate(selectedDate);
+                          final allTasksForDate = taskProvider.getTasksForDate(
+                            selectedDate,
+                          );
 
-                          return tasksForSelectedDate.isEmpty
+                          bool isTaskCompleted(TaskModel task) {
+                            final normalizedSelectedDate = DateTime(
+                              selectedDate.year,
+                              selectedDate.month,
+                              selectedDate.day,
+                            );
+                            return completedTaskProvider.completedTasks.any((
+                              completedTask,
+                            ) {
+                              final normalizedCompletedDate = DateTime(
+                                completedTask.completedDate.year,
+                                completedTask.completedDate.month,
+                                completedTask.completedDate.day,
+                              );
+                              return completedTask.taskId == task.uid &&
+                                  normalizedCompletedDate.isAtSameMomentAs(
+                                    normalizedSelectedDate,
+                                  );
+                            });
+                          }
+
+                          final List<TaskModel> filteredTasks;
+                          if (_selectedCategory == 'Completed') {
+                            filteredTasks = allTasksForDate
+                                .where(isTaskCompleted)
+                                .toList();
+                          } else if (_selectedCategory == 'Incomplete') {
+                            filteredTasks = allTasksForDate
+                                .where((task) => !isTaskCompleted(task))
+                                .toList();
+                          } else {
+                            filteredTasks = allTasksForDate;
+                          }
+
+                          return filteredTasks.isEmpty
                               ? Center(
                                   child: Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
@@ -107,7 +154,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                                         Icons.task_alt,
                                         size: 56,
                                         color: colors.primary.withValues(
-                                          alpha: 0.5,
+                                          alpha: .5,
                                         ),
                                       ),
                                       const SizedBox(height: 12),
@@ -115,7 +162,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                                         'No tasks for this date',
                                         style: TextStyle(
                                           color: colors.primary.withValues(
-                                            alpha: 0.7,
+                                            alpha: .7,
                                           ),
                                           fontSize: 14,
                                           fontWeight: FontWeight.w500,
@@ -129,28 +176,19 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                                     horizontal: 20.0,
                                   ),
                                   child: ListView.builder(
-                                    itemCount: tasksForSelectedDate.length,
+                                    itemCount: filteredTasks.length,
                                     itemBuilder: (context, index) {
-                                      final task = tasksForSelectedDate[index];
-
-                                      final bool isCompleted =
-                                          completedTaskProvider.completedTasks
-                                              .any(
-                                                (completedTask) =>
-                                                    completedTask.taskId ==
-                                                        task.uid &&
-                                                    completedTask
-                                                            .completedDate
-                                                            .day ==
-                                                        selectedDate.day,
-                                              );
+                                      final task = filteredTasks[index];
+                                      final bool isCompleted = isTaskCompleted(
+                                        task,
+                                      );
 
                                       final bool isTaskFinished = DateTime.now()
                                           .isAfter(
                                             DateTime(
-                                              DateTime.now().year,
-                                              DateTime.now().month,
-                                              DateTime.now().day,
+                                              selectedDate.year,
+                                              selectedDate.month,
+                                              selectedDate.day,
                                               task.endTime.hour,
                                               task.endTime.minute,
                                             ),

@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 
-class CategorySelect extends StatefulWidget {
-  const CategorySelect({super.key});
+class CategorySelect extends StatelessWidget {
+  final String selectedCategory;
+  final ValueChanged<String> onCategorySelected;
 
-  @override
-  State<CategorySelect> createState() => _CategorySelectState();
-}
+  const CategorySelect({
+    super.key,
+    required this.selectedCategory,
+    required this.onCategorySelected,
+  });
 
-class _CategorySelectState extends State<CategorySelect> {
-  final List<String> _categories = ['All', 'Completed', 'Incomplete'];
-  int _selectedItem = 0;
+  final List<String> _categories = const ['All', 'Completed', 'Incomplete'];
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +21,8 @@ class _CategorySelectState extends State<CategorySelect> {
         scrollDirection: Axis.horizontal,
         itemCount: _categories.length,
         itemBuilder: (context, index) {
-          final bool isSelected = index == _selectedItem;
+          final category = _categories[index];
+          final bool isSelected = category == selectedCategory;
 
           final Color containerColor = isSelected
               ? colors.primary
@@ -28,12 +30,7 @@ class _CategorySelectState extends State<CategorySelect> {
           final Color textColor = isSelected ? Colors.white : colors.primary;
 
           return GestureDetector(
-
-            onTap: () {
-              setState(() {
-                _selectedItem = index;
-              });
-            },
+            onTap: () => onCategorySelected(category), // Reports the tap
             child: Container(
               margin: const EdgeInsets.symmetric(horizontal: 4.0),
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -44,7 +41,7 @@ class _CategorySelectState extends State<CategorySelect> {
               ),
               child: Center(
                 child: Text(
-                  _categories[index].toUpperCase(),
+                  category.toUpperCase(),
                   style: TextStyle(
                     color: textColor,
                     fontWeight: FontWeight.bold,
