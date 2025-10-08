@@ -17,21 +17,18 @@ class _HistoryState extends State<History> {
   @override
   void initState() {
     super.initState();
-    // This now generates any missing history records and then fetches them.
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final taskProvider = context.read<TaskProvider>();
       final completedProvider = context.read<CompletedTaskProvider>();
       final historyProvider = context.read<HistoryProvider>();
 
-      // Optional: Show a loading indicator while generating
-      // await taskProvider.generateMissingHistory(completedProvider.completedTasks);
-
-      // Fetch the clean history data from the new collection
+      await taskProvider.generateMissingHistory(
+        completedProvider.completedTasks,
+      );
       await historyProvider.fetchHistory();
     });
   }
 
-  // This is now much simpler, just calling the new provider.
   Future<void> _onClearHistory() async {
     final bool? confirm = await showDialog<bool>(
       context: context,
@@ -67,17 +64,26 @@ class _HistoryState extends State<History> {
         child: Padding(
           padding: const EdgeInsets.only(left: 20, right: 20, top: 20),
           child: Consumer<HistoryProvider>(
-            // Note: Now consumes HistoryProvider
             builder: (context, historyProvider, child) {
               if (historyProvider.isLoading &&
                   historyProvider.history.isEmpty) {
                 return const Center(child: CircularProgressIndicator());
               }
 
-              // --- New Grouping Logic ---
-              // We process the flat list from the provider into a grouped map for the UI.
+              final now = DateTime.now();
+              final todayAtMidnight = DateTime(now.year, now.month, now.day);
+
+              final pastHistory = historyProvider.history.where((item) {
+                final itemDate = DateTime(
+                  item.instanceDate.year,
+                  item.instanceDate.month,
+                  item.instanceDate.day,
+                );
+                return itemDate.isBefore(todayAtMidnight);
+              }).toList();
+
               final Map<DateTime, List<HistoryModel>> groupedHistory = {};
-              for (final item in historyProvider.history) {
+              for (final item in pastHistory) {
                 final dateKey = DateTime(
                   item.instanceDate.year,
                   item.instanceDate.month,
@@ -95,7 +101,6 @@ class _HistoryState extends State<History> {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // --- UI is Identical to Your Previous Version ---
                   Text(
                     'History',
                     style: TextStyle(
@@ -105,6 +110,7 @@ class _HistoryState extends State<History> {
                     ),
                   ),
                   const SizedBox(height: 16),
+                  // --- FIX: This Row widget has been properly structured ---
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -160,11 +166,26 @@ class _HistoryState extends State<History> {
                   ),
                   const SizedBox(height: 16),
                   if (groupedHistory.isEmpty)
-                    const Expanded(
+                    Expanded(
                       child: Center(
-                        child: Text(
-                          'No past tasks found.',
-                          style: TextStyle(fontSize: 18, color: Colors.grey),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.task_alt,
+                              size: 56,
+                              color: colors.primary.withOpacity(0.5),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              'No history found',
+                              style: TextStyle(
+                                color: colors.primary.withOpacity(0.7),
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     )

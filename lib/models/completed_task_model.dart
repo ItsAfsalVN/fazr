@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class CompletedTask {
   final String taskId;
-  final DateTime completedDate; // Renamed for consistency
+  final DateTime completedDate;
 
   CompletedTask({required this.taskId, required this.completedDate});
 

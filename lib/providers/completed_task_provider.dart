@@ -1,4 +1,4 @@
-import 'package:fazr/models/completed_Task_model.dart';
+import 'package:fazr/models/completed_task_model.dart';
 import 'package:flutter/material.dart';
 import '../services/database_services.dart';
 
@@ -31,11 +31,11 @@ class CompletedTaskProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void removeCompletedTask(String taskId, DateTime completionDate) {
+  void removeCompletedTask(String taskId, DateTime completedDate) {
     _completedTasks.removeWhere(
       (task) =>
           task.taskId == taskId &&
-          task.completedDate.isAtSameMomentAs(completionDate),
+          task.completedDate.isAtSameMomentAs(completedDate),
     );
     notifyListeners();
   }

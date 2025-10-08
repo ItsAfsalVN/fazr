@@ -17,9 +17,11 @@ class HistoryProvider extends ChangeNotifier {
       _history = querySnapshot.docs.map((doc) {
         return HistoryModel.fromFirestore(doc.data() as Map<String, dynamic>);
       }).toList();
-      // Sort by date, newest first
       _history.sort((a, b) => b.instanceDate.compareTo(a.instanceDate));
-    } finally {
+    } catch(e) {
+      print("Error fetching history: $e");
+    }
+    finally {
       _isLoading = false;
       notifyListeners();
     }
@@ -29,10 +31,12 @@ class HistoryProvider extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
     try {
-      // Simple and clean: just delete all documents.
       await clearAllHistoryInFirestore(); 
       _history.clear();
-    } finally {
+    } catch(e) {
+      print("Error clearing history: $e");
+    }
+    finally {
       _isLoading = false;
       notifyListeners();
     }

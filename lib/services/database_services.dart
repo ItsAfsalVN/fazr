@@ -39,33 +39,28 @@ Future<void> deleteTaskFromFireStore(String taskId) async {
   }
 }
 
+// REPLACE your old addCompletedTaskInFireStore with this
 Future<void> addCompletedTaskInFireStore(String taskId, DateTime date) async {
+  // 1. Normalize the date to midnight to keep it consistent.
+  final normalizedDate = DateTime(date.year, date.month, date.day);
+  
+  // 2. Create a predictable, unique document ID.
+  final docId = '${taskId}_${normalizedDate.toIso8601String().split('T')[0]}';
+
   try {
-    await db.collection('completed_tasks').add({
+    await db.collection('completed_tasks').doc(docId).set({
       'taskId': taskId,
-      'completionDate': Timestamp.fromDate(date),
+      'completedDate': Timestamp.fromDate(normalizedDate), 
     });
   } catch (e) {
     throw Exception("Failed to add completed task: $e");
   }
 }
 
-Future<QuerySnapshot> getCompletedTaskFromFireStore(
-  String taskId,
-  DateTime date,
-) async {
-  try {
-    return await db
-        .collection('completed_tasks')
-        .where('taskId', isEqualTo: taskId)
-        .where('completionDate', isEqualTo: Timestamp.fromDate(date))
-        .get();
-  } catch (e) {
-    throw Exception("Failed to fetch completed task: $e");
-  }
-}
+Future<void> deleteCompletedTaskFromFireStore(String taskId, DateTime date) async {
+  final normalizedDate = DateTime(date.year, date.month, date.day);
+  final docId = '${taskId}_${normalizedDate.toIso8601String().split('T')[0]}';
 
-Future<void> deleteCompletedTaskFromFireStore(String docId) async {
   try {
     await db.collection('completed_tasks').doc(docId).delete();
   } catch (e) {
@@ -125,8 +120,6 @@ Future<UserModel?> getUserFromFireStore(String uid) async {
 
 Future<QuerySnapshot> fetchHistoryFromFirestore() async {
   try {
-    // This queries the 'task_history' collection and gets all documents.
-    // You could add .orderBy('instanceDate', descending: true) here for sorting.
     return await db.collection('task_history').get();
   } catch (e) {
     throw Exception("Error fetching task history: $e");
@@ -163,5 +156,61 @@ Future<void> createHistoryRecordInFirestore({
     });
   } catch (e) {
     throw Exception("Failed to create history record: $e");
+  }
+}
+
+Future<bool> doesHistoryRecordExist(String taskId, DateTime date) async {
+  final normalizedDate = DateTime(date.year, date.month, date.day);
+
+  try {
+    final snapshot = await db
+        .collection('task_history')
+        .where('taskId', isEqualTo: taskId)
+        .where('instanceDate', isEqualTo: Timestamp.fromDate(normalizedDate))
+        .limit(1)
+        .get();
+
+    return snapshot.docs.isNotEmpty;
+  } catch (e) {
+    print("Error checking if history record exists: $e");
+    return false;
+  }
+}
+
+Future<void> createOrUpdateHistoryRecord({
+  required String taskId,
+  required String taskTitle,
+  required DateTime instanceDate,
+  required String status,
+}) async {
+  final normalizedDate = DateTime(
+    instanceDate.year,
+    instanceDate.month,
+    instanceDate.day,
+  );
+  final recordRef = db.collection('task_history');
+
+  try {
+    final snapshot = await recordRef
+        .where('taskId', isEqualTo: taskId)
+        .where('instanceDate', isEqualTo: Timestamp.fromDate(normalizedDate))
+        .limit(1)
+        .get();
+
+    if (snapshot.docs.isNotEmpty) {
+      final docId = snapshot.docs.first.id;
+      await recordRef.doc(docId).update({'status': status});
+      print('Updated history record for $taskId to "$status"');
+    } else {
+      await recordRef.add({
+        'taskId': taskId,
+        'taskTitle': taskTitle,
+        'instanceDate': Timestamp.fromDate(normalizedDate),
+        'status': status,
+      });
+      print('Created history record for $taskId with status "$status"');
+    }
+  } catch (e) {
+    throw Exception("Failed to create or update history record: $e");
   }
 }

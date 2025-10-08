@@ -1,4 +1,4 @@
-import 'package:fazr/models/completed_Task_model.dart';
+import 'package:fazr/models/completed_task_model.dart';
 import 'package:fazr/models/task_model.dart';
 import 'package:fazr/providers/completed_task_provider.dart';
 import 'package:flutter/material.dart';
@@ -8,6 +8,7 @@ import '../services/database_services.dart';
 
 class TaskProvider extends ChangeNotifier {
   List<TaskModel> _tasks = [];
+  bool _isLoading = false;
 
   TaskModel _temporaryTask = TaskModel(
     uid: null,
@@ -99,14 +100,13 @@ class TaskProvider extends ChangeNotifier {
   }
 
   Future<void> createTask() async {
-    final jsonTask = toJson(_temporaryTask);
-
+    _isLoading = true;
+    notifyListeners();
     try {
+      final jsonTask = _temporaryTask.toJson();
       final taskId = await createTaskInFireStore(jsonTask);
       final newTask = _temporaryTask.copyWith(uid: taskId);
-
       _tasks.add(newTask);
-
       _temporaryTask = TaskModel(
         uid: null,
         title: '',
@@ -118,24 +118,27 @@ class TaskProvider extends ChangeNotifier {
         alertAtEnd: false,
         repeat: "once",
       );
-
-      notifyListeners();
     } catch (e) {
       print(e);
       rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 
   Future<void> fetchAllTasks() async {
+    _isLoading = true;
+    notifyListeners();
     try {
       final querySnapshot = await fetchAllTasksFromFireStore();
-
       _tasks = querySnapshot.docs.map((doc) {
         return TaskModel.fromJson(doc.id, doc.data() as Map<String, dynamic>);
       }).toList();
     } catch (e) {
       print("Error fetching tasks: $e");
     } finally {
+      _isLoading = false;
       notifyListeners();
     }
   }
@@ -203,6 +206,10 @@ class TaskProvider extends ChangeNotifier {
       context,
       listen: false,
     );
+    final task = _tasks.firstWhere(
+      (t) => t.uid == taskId,
+      orElse: () => _temporaryTask,
+    );
 
     try {
       if (isCompleted) {
@@ -210,12 +217,23 @@ class TaskProvider extends ChangeNotifier {
         completedTaskProvider.addCompletedTask(
           CompletedTask(taskId: taskId, completedDate: date),
         );
+
+        await createOrUpdateHistoryRecord(
+          taskId: taskId,
+          taskTitle: task.title,
+          instanceDate: date,
+          status: 'completed',
+        );
       } else {
-        final querySnapshot = await getCompletedTaskFromFireStore(taskId, date);
-        for (var doc in querySnapshot.docs) {
-          await deleteCompletedTaskFromFireStore(doc.id);
-        }
+        await deleteCompletedTaskFromFireStore(taskId, date);
         completedTaskProvider.removeCompletedTask(taskId, date);
+
+        await createOrUpdateHistoryRecord(
+          taskId: taskId,
+          taskTitle: task.title,
+          instanceDate: date,
+          status: 'missed',
+        );
       }
     } catch (e) {
       rethrow;
@@ -223,17 +241,16 @@ class TaskProvider extends ChangeNotifier {
   }
 
   Future<void> updateTask(String taskId) async {
-    final jsonTask = toJson(_temporaryTask);
-
+    _isLoading = true;
+    notifyListeners();
     try {
+      // FIX: Calls the correct toJson from the TaskModel
+      final jsonTask = _temporaryTask.toJson();
       await updateTaskInFireStore(taskId, jsonTask);
-
       final taskIndex = _tasks.indexWhere((task) => task.uid == taskId);
-
       if (taskIndex != -1) {
         _tasks[taskIndex] = _temporaryTask.copyWith(uid: taskId);
       }
-
       _temporaryTask = TaskModel(
         uid: null,
         title: '',
@@ -245,20 +262,25 @@ class TaskProvider extends ChangeNotifier {
         alertAtEnd: false,
         repeat: "once",
       );
-
-      notifyListeners();
     } catch (e) {
       rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 
   Future<void> deleteTask(String taskId) async {
+    _isLoading = true;
+    notifyListeners();
     try {
       await deleteTaskFromFireStore(taskId);
       _tasks.removeWhere((task) => task.uid == taskId);
-      notifyListeners();
     } catch (e) {
       rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 
@@ -285,10 +307,12 @@ class TaskProvider extends ChangeNotifier {
   }
 
   Future<void> generateMissingHistory(
-  List<CompletedTask> completedTasks,
-) async {
-  try {
-    final tasks = _tasks;
+    List<CompletedTask> completedTasks,
+  ) async {
+    print("Generating missing history...");
+    _isLoading = true;
+    notifyListeners();
+
     final today = DateTime.now();
     final yesterday = DateTime(
       today.year,
@@ -296,93 +320,58 @@ class TaskProvider extends ChangeNotifier {
       today.day,
     ).subtract(const Duration(days: 1));
 
-    for (final task in tasks) {
-      // startingDate is already a DateTime, no need to parse
-      DateTime currentDate = DateTime(
-        task.startingDate.year,
-        task.startingDate.month,
-        task.startingDate.day,
+    final completedInstances = completedTasks.map((c) {
+      final dateKey = DateTime(
+        c.completedDate.year,
+        c.completedDate.month,
+        c.completedDate.day,
       );
+      return '${c.taskId}_${dateKey.toIso8601String()}';
+    }).toSet();
 
-      // For 'once' tasks, only check the starting date
-      if (task.repeat == 'once') {
-        if (currentDate.isBefore(yesterday) ||
-            currentDate.isAtSameMomentAs(yesterday)) {
-          final dateKey = currentDate.toIso8601String().split('T')[0];
-          final isDeleted = task.deletedInstances?.contains(dateKey) ?? false;
+    // We check the last 30 days. This is a safe window.
+    for (int i = 0; i < 30; i++) {
+      final dateToCheck = yesterday.subtract(Duration(days: i));
+      final tasksForDay = getTasksForDate(dateToCheck);
 
-          if (!isDeleted) {
-            final wasCompleted = completedTasks.any(
-              (completed) =>
-                  completed.taskId == task.uid &&
-                  completed.completedDate.year == currentDate.year &&
-                  completed.completedDate.month == currentDate.month &&
-                  completed.completedDate.day == currentDate.day,
-            );
-
-            await createHistoryRecordInFirestore(
-              taskId: task.uid!,
-              taskTitle: task.title,
-              instanceDate: currentDate,
-              status: wasCompleted ? 'completed' : 'missed',
-            );
-          }
-        }
-        continue;
-      }
-
-      // For recurring tasks (daily, weekly, monthly)
-      while (currentDate.isBefore(yesterday) ||
-          currentDate.isAtSameMomentAs(yesterday)) {
-        final dateKey = currentDate.toIso8601String().split('T')[0];
-        final isDeleted = task.deletedInstances?.contains(dateKey) ?? false;
-
-        if (!isDeleted) {
-          bool shouldCreateHistory = false;
-
-          // Check if this date matches the repeat pattern
-          switch (task.repeat) {
-            case 'daily':
-              shouldCreateHistory = true;
-              break;
-
-            case 'weekly':
-              if (task.startingDate.weekday == currentDate.weekday) {
-                shouldCreateHistory = true;
-              }
-              break;
-
-            case 'monthly':
-              if (task.startingDate.day == currentDate.day) {
-                shouldCreateHistory = true;
-              }
-              break;
-          }
-
-          if (shouldCreateHistory) {
-            final wasCompleted = completedTasks.any(
-              (completed) =>
-                  completed.taskId == task.uid &&
-                  completed.completedDate.year == currentDate.year &&
-                  completed.completedDate.month == currentDate.month &&
-                  completed.completedDate.day == currentDate.day,
-            );
-
-            await createHistoryRecordInFirestore(
-              taskId: task.uid!,
-              taskTitle: task.title,
-              instanceDate: currentDate,
-              status: wasCompleted ? 'completed' : 'missed',
-            );
-          }
+      for (final task in tasksForDay) {
+        if (DateTime(
+          task.startingDate.year,
+          task.startingDate.month,
+          task.startingDate.day,
+        ).isAfter(dateToCheck)) {
+          continue;
         }
 
-        // Move to next day
-        currentDate = currentDate.add(const Duration(days: 1));
+        bool recordExists = await doesHistoryRecordExist(
+          task.uid!,
+          dateToCheck,
+        );
+
+        if (!recordExists) {
+          final normalizedDate = DateTime(
+            dateToCheck.year,
+            dateToCheck.month,
+            dateToCheck.day,
+          );
+          final instanceKey = '${task.uid}_${normalizedDate.toIso8601String()}';
+          final status = completedInstances.contains(instanceKey)
+              ? 'completed'
+              : 'missed';
+
+          print(
+            'Creating "${status}" record for ${task.title} on $dateToCheck',
+          );
+          await createHistoryRecordInFirestore(
+            taskId: task.uid!,
+            taskTitle: task.title,
+            instanceDate: dateToCheck,
+            status: status,
+          );
+        }
       }
     }
-  } catch (e) {
-    print('Error generating missing history: $e');
+    _isLoading = false;
+    notifyListeners();
   }
-}
 }
