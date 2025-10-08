@@ -10,6 +10,7 @@ environment:
 
 dependencies:
   android_alarm_manager_plus: ^5.0.0
+  cached_network_image: ^3.4.1
   cloud_firestore: ^6.0.1
   cupertino_icons: ^1.0.8
   easy_date_timeline: ^2.0.9

@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:fazr/components/edit_profile_modal.dart';
 import 'package:fazr/models/user_model.dart';
 import 'package:fazr/providers/user_provider.dart';
@@ -89,10 +90,21 @@ class _ProfileState extends State<Profile> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    UserModel? user = context.watch<UserProvider>().user;
+
+    final userProvider = context.watch<UserProvider>();
+    final user = userProvider.user;
+    final isLoading = userProvider.isLoading;
+
+    if (isLoading && user == null) {
+      return Scaffold(
+        body: Center(child: CircularProgressIndicator(color: colors.primary)),
+      );
+    }
 
     if (user == null) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const Scaffold(
+        body: Center(child: Text('Could not load user data.')),
+      );
     }
 
     return Scaffold(
@@ -137,11 +149,11 @@ class _ProfileState extends State<Profile> {
                 GestureDetector(
                   onTap: _isUploading ? null : handleAvatarTap,
                   child: CircleAvatar(
-                    backgroundColor: colors.primary,
                     radius: 40,
+                    backgroundColor: colors.primary.withValues(alpha: 0.3),
                     backgroundImage:
                         (user.avatar != null && user.avatar!.isNotEmpty)
-                        ? NetworkImage(user.avatar!)
+                        ? CachedNetworkImageProvider(user.avatar!)
                         : null,
                     child: _isUploading
                         ? const CircularProgressIndicator(

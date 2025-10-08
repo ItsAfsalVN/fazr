@@ -7,28 +7,39 @@ import '../services/storage_service.dart';
 class UserProvider extends ChangeNotifier {
   UserModel? _user;
   final CacheService _cacheService = CacheService();
+  bool _isLoading = false;
 
   UserModel? get user => _user;
+  bool get isLoading => _isLoading;
 
   Future<void> syncUserOnAppStart(String userId) async {
+    _isLoading = true;
+    notifyListeners();
+
     _user = await getUserFromFireStore(userId);
-    if (_user == null) return;
+    if (_user == null) {
+      _isLoading = false;
+      notifyListeners();
+      return;
+    }
 
     final cachedUrl = await _cacheService.getAvatarUrl();
     if (cachedUrl != null) {
       _user = _user!.copyWith(avatar: cachedUrl);
-      notifyListeners();
     }
 
     final githubUrl = await getAvatarUrlFromGitHub(userId);
 
     if (githubUrl != null && githubUrl != _user!.avatar) {
-      print("Newer avatar found on GitHub. Syncing...");
+      await updateUserAvatar(githubUrl);
     } else if (githubUrl != null && _user!.avatar == null) {
       await updateUserAvatar(githubUrl);
     } else {
       print("Local avatar is up-to-date.");
     }
+
+    _isLoading = false;
+    notifyListeners();
   }
 
   Future<void> updateUserAvatar(String newUrl) async {
