@@ -4,7 +4,6 @@ import 'package:fazr/providers/user_provider.dart';
 import 'package:fazr/screens/auth/sign_in.dart';
 import 'package:fazr/services/storage_service.dart';
 import 'package:fazr/utils/show_confirm_box.dart';
-import 'package:fazr/utils/show_snackbar.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -20,6 +19,17 @@ class Profile extends StatefulWidget {
 class _ProfileState extends State<Profile> {
   bool _isUploading = false;
 
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final userId = FirebaseAuth.instance.currentUser?.uid;
+      if (userId != null) {
+        context.read<UserProvider>().syncUserOnAppStart(userId);
+      }
+    });
+  }
+
   void _handleLogOut() async {
     try {
       bool choice = await showConfirmationDialog(
@@ -29,7 +39,6 @@ class _ProfileState extends State<Profile> {
       );
       if (choice) {
         await FirebaseAuth.instance.signOut();
-
         if (!mounted) return;
 
         context.read<UserProvider>().clearUser();
@@ -41,9 +50,7 @@ class _ProfileState extends State<Profile> {
         );
       }
     } catch (error) {
-      if (mounted) {
-        showSnackBar(context, SnackBarType.error, "Failed to logout $error");
-      }
+      print("Unable to log out $error");
     }
   }
 
@@ -68,20 +75,10 @@ class _ProfileState extends State<Profile> {
       final String? downloadUrl = await uploadAvatar(image, user.id);
 
       if (downloadUrl != null && mounted) {
-        userProvider.updateUserAvatar(downloadUrl);
-      } else if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Image upload failed. Please try again.'),
-          ),
-        );
+        await userProvider.updateUserAvatar(downloadUrl);
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('An error occurred: $e')));
-      }
+      print("Unable to update user avater $e");
     } finally {
       if (mounted) {
         setState(() => _isUploading = false);
@@ -129,7 +126,7 @@ class _ProfileState extends State<Profile> {
                       Text(
                         user.email,
                         style: TextStyle(
-                          color: colors.primary.withOpacity(0.7),
+                          color: colors.primary.withValues(alpha: .7),
                           fontSize: 16,
                         ),
                         overflow: TextOverflow.ellipsis,
