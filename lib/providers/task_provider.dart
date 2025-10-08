@@ -176,7 +176,8 @@ class TaskProvider extends ChangeNotifier {
             break;
 
           case 'weekly':
-            if (normalizedStartingDate.weekday == normalizedTargetDate.weekday) {
+            if (normalizedStartingDate.weekday ==
+                normalizedTargetDate.weekday) {
               tasksForDate.add(task);
             }
             break;
@@ -207,7 +208,7 @@ class TaskProvider extends ChangeNotifier {
       if (isCompleted) {
         await addCompletedTaskInFireStore(taskId, date);
         completedTaskProvider.addCompletedTask(
-          CompletedTask(taskId: taskId, completionDate: date),
+          CompletedTask(taskId: taskId, completedDate: date),
         );
       } else {
         final querySnapshot = await getCompletedTaskFromFireStore(taskId, date);
@@ -282,4 +283,106 @@ class TaskProvider extends ChangeNotifier {
       rethrow;
     }
   }
+
+  Future<void> generateMissingHistory(
+  List<CompletedTask> completedTasks,
+) async {
+  try {
+    final tasks = _tasks;
+    final today = DateTime.now();
+    final yesterday = DateTime(
+      today.year,
+      today.month,
+      today.day,
+    ).subtract(const Duration(days: 1));
+
+    for (final task in tasks) {
+      // startingDate is already a DateTime, no need to parse
+      DateTime currentDate = DateTime(
+        task.startingDate.year,
+        task.startingDate.month,
+        task.startingDate.day,
+      );
+
+      // For 'once' tasks, only check the starting date
+      if (task.repeat == 'once') {
+        if (currentDate.isBefore(yesterday) ||
+            currentDate.isAtSameMomentAs(yesterday)) {
+          final dateKey = currentDate.toIso8601String().split('T')[0];
+          final isDeleted = task.deletedInstances?.contains(dateKey) ?? false;
+
+          if (!isDeleted) {
+            final wasCompleted = completedTasks.any(
+              (completed) =>
+                  completed.taskId == task.uid &&
+                  completed.completedDate.year == currentDate.year &&
+                  completed.completedDate.month == currentDate.month &&
+                  completed.completedDate.day == currentDate.day,
+            );
+
+            await createHistoryRecordInFirestore(
+              taskId: task.uid!,
+              taskTitle: task.title,
+              instanceDate: currentDate,
+              status: wasCompleted ? 'completed' : 'missed',
+            );
+          }
+        }
+        continue;
+      }
+
+      // For recurring tasks (daily, weekly, monthly)
+      while (currentDate.isBefore(yesterday) ||
+          currentDate.isAtSameMomentAs(yesterday)) {
+        final dateKey = currentDate.toIso8601String().split('T')[0];
+        final isDeleted = task.deletedInstances?.contains(dateKey) ?? false;
+
+        if (!isDeleted) {
+          bool shouldCreateHistory = false;
+
+          // Check if this date matches the repeat pattern
+          switch (task.repeat) {
+            case 'daily':
+              shouldCreateHistory = true;
+              break;
+
+            case 'weekly':
+              if (task.startingDate.weekday == currentDate.weekday) {
+                shouldCreateHistory = true;
+              }
+              break;
+
+            case 'monthly':
+              if (task.startingDate.day == currentDate.day) {
+                shouldCreateHistory = true;
+              }
+              break;
+          }
+
+          if (shouldCreateHistory) {
+            final wasCompleted = completedTasks.any(
+              (completed) =>
+                  completed.taskId == task.uid &&
+                  completed.completedDate.year == currentDate.year &&
+                  completed.completedDate.month == currentDate.month &&
+                  completed.completedDate.day == currentDate.day,
+            );
+
+            await createHistoryRecordInFirestore(
+              taskId: task.uid!,
+              taskTitle: task.title,
+              instanceDate: currentDate,
+              status: wasCompleted ? 'completed' : 'missed',
+            );
+          }
+        }
+
+        // Move to next day
+        currentDate = currentDate.add(const Duration(days: 1));
+      }
+    }
+  } catch (e) {
+    print('Error generating missing history: $e');
+  }
+}
 }

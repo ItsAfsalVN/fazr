@@ -1,6 +1,7 @@
 import 'package:fazr/firebase_options.dart';
 import 'package:fazr/providers/completed_task_provider.dart';
 import 'package:fazr/providers/date_provider.dart';
+import 'package:fazr/providers/history_provider.dart';
 import 'package:fazr/providers/task_provider.dart';
 import 'package:fazr/providers/user_provider.dart';
 import 'package:fazr/screens/splash.dart';
@@ -27,6 +28,7 @@ class App extends StatelessWidget {
         ChangeNotifierProvider(create: (ctx) => DateProvider()),
         ChangeNotifierProvider(create: (ctx) => CompletedTaskProvider()),
         ChangeNotifierProvider(create: (ctx) => UserProvider()),
+        ChangeNotifierProvider(create: (ctx) => HistoryProvider() ),
       ],
       child: MaterialApp(
         theme: ThemeData(

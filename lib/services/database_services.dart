@@ -100,14 +100,16 @@ Future<void> createUserInFireStore(UserModel user) async {
   }
 }
 
-Future<void> updateUserInFirestore(String userId, Map<String, dynamic> data) async {
+Future<void> updateUserInFirestore(
+  String userId,
+  Map<String, dynamic> data,
+) async {
   try {
     await db.collection('users').doc(userId).update(data);
   } catch (e) {
     throw Exception("Failed to update user in Firestore: $e");
   }
 }
-
 
 Future<UserModel?> getUserFromFireStore(String uid) async {
   try {
@@ -118,5 +120,48 @@ Future<UserModel?> getUserFromFireStore(String uid) async {
     return null;
   } catch (error) {
     throw Exception("Failed to get user from firestore: $error");
+  }
+}
+
+Future<QuerySnapshot> fetchHistoryFromFirestore() async {
+  try {
+    // This queries the 'task_history' collection and gets all documents.
+    // You could add .orderBy('instanceDate', descending: true) here for sorting.
+    return await db.collection('task_history').get();
+  } catch (e) {
+    throw Exception("Error fetching task history: $e");
+  }
+}
+
+Future<void> clearAllHistoryInFirestore() async {
+  try {
+    final collection = db.collection('task_history');
+    final snapshot = await collection.get();
+
+    final batch = db.batch();
+    for (var doc in snapshot.docs) {
+      batch.delete(doc.reference);
+    }
+    await batch.commit();
+  } catch (e) {
+    throw Exception("Failed to clear task history: $e");
+  }
+}
+
+Future<void> createHistoryRecordInFirestore({
+  required String taskId,
+  required String taskTitle,
+  required DateTime instanceDate,
+  required String status,
+}) async {
+  try {
+    await db.collection('task_history').add({
+      'taskId': taskId,
+      'taskTitle': taskTitle,
+      'instanceDate': Timestamp.fromDate(instanceDate),
+      'status': status,
+    });
+  } catch (e) {
+    throw Exception("Failed to create history record: $e");
   }
 }

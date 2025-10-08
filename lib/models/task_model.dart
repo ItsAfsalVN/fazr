@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 class TaskModel {
@@ -30,7 +31,9 @@ class TaskModel {
       uid: id,
       title: data['title'] as String,
       description: data['description'] as String,
-      startingDate: DateTime.parse(data['startingDate'] as String),
+      startingDate: (data['startingDate'] is Timestamp)
+          ? (data['startingDate'] as Timestamp).toDate()
+          : DateTime.parse(data['startingDate'] as String),
       startTime: TimeOfDay(
         hour: int.parse(data['startTime'].split(':')[0]),
         minute: int.parse(data['startTime'].split(':')[1]),
@@ -52,7 +55,7 @@ class TaskModel {
     return {
       'title': title,
       'description': description,
-      'startingDate': startingDate.toIso8601String(),
+      'startingDate': Timestamp.fromDate(startingDate),
       'startTime': '${startTime.hour}:${startTime.minute}',
       'endTime': '${endTime.hour}:${endTime.minute}',
       'alertAtStart': alertAtStart,

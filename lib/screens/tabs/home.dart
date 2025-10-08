@@ -4,7 +4,7 @@ import 'package:fazr/components/task_card.dart';
 import 'package:fazr/components/timeline_selector.dart';
 import 'package:fazr/providers/date_provider.dart';
 import 'package:fazr/providers/task_provider.dart';
-import 'package:fazr/providers/completed_task_provider.dart'; 
+import 'package:fazr/providers/completed_task_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -140,7 +140,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                                                     completedTask.taskId ==
                                                         task.uid &&
                                                     completedTask
-                                                            .completionDate
+                                                            .completedDate
                                                             .day ==
                                                         selectedDate.day,
                                               );

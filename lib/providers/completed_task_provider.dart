@@ -35,7 +35,7 @@ class CompletedTaskProvider extends ChangeNotifier {
     _completedTasks.removeWhere(
       (task) =>
           task.taskId == taskId &&
-          task.completionDate.isAtSameMomentAs(completionDate),
+          task.completedDate.isAtSameMomentAs(completionDate),
     );
     notifyListeners();
   }
