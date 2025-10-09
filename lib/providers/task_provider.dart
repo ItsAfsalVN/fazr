@@ -1,6 +1,7 @@
 import 'package:fazr/models/completed_task_model.dart';
 import 'package:fazr/models/task_model.dart';
 import 'package:fazr/providers/completed_task_provider.dart';
+import 'package:fazr/utils/set_alarm_instance.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:table_calendar/table_calendar.dart';
@@ -20,6 +21,7 @@ class TaskProvider extends ChangeNotifier {
     alertAtStart: false,
     alertAtEnd: false,
     repeat: "once",
+    rrule: "",
   );
 
   CalendarFormat _calendarFormat = CalendarFormat.month;
@@ -99,13 +101,18 @@ class TaskProvider extends ChangeNotifier {
     };
   }
 
-  Future<void> createTask() async {
+  Future<void> createTask(BuildContext context) async {
     _isLoading = true;
     notifyListeners();
     try {
+      final rruleString = _generateRruleString();
+      _temporaryTask = _temporaryTask.copyWith(rrule: rruleString);
+
       final jsonTask = _temporaryTask.toJson();
       final taskId = await createTaskInFireStore(jsonTask);
       final newTask = _temporaryTask.copyWith(uid: taskId);
+      await scheduleNextTaskAlarm(newTask);
+
       _tasks.add(newTask);
       _temporaryTask = TaskModel(
         uid: null,
@@ -117,6 +124,7 @@ class TaskProvider extends ChangeNotifier {
         alertAtStart: false,
         alertAtEnd: false,
         repeat: "once",
+        rrule: '',
       );
     } catch (e) {
       print(e);
@@ -240,17 +248,22 @@ class TaskProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> updateTask(String taskId) async {
+  Future<void> updateTask(BuildContext context, String taskId) async {
     _isLoading = true;
     notifyListeners();
     try {
-      // FIX: Calls the correct toJson from the TaskModel
-      final jsonTask = _temporaryTask.toJson();
-      await updateTaskInFireStore(taskId, jsonTask);
+      final rruleString = _generateRruleString();
+      _temporaryTask = _temporaryTask.copyWith(rrule: rruleString);
+      final updatedTask = _temporaryTask.copyWith(uid: taskId);
+
+      await updateTaskInFireStore(taskId, updatedTask.toJson());
+      await scheduleNextTaskAlarm(updatedTask);
+
       final taskIndex = _tasks.indexWhere((task) => task.uid == taskId);
       if (taskIndex != -1) {
-        _tasks[taskIndex] = _temporaryTask.copyWith(uid: taskId);
+        _tasks[taskIndex] = updatedTask;
       }
+
       _temporaryTask = TaskModel(
         uid: null,
         title: '',
@@ -261,6 +274,7 @@ class TaskProvider extends ChangeNotifier {
         alertAtStart: false,
         alertAtEnd: false,
         repeat: "once",
+        rrule: "",
       );
     } catch (e) {
       rethrow;
@@ -329,7 +343,6 @@ class TaskProvider extends ChangeNotifier {
       return '${c.taskId}_${dateKey.toIso8601String()}';
     }).toSet();
 
-    // We check the last 30 days. This is a safe window.
     for (int i = 0; i < 30; i++) {
       final dateToCheck = yesterday.subtract(Duration(days: i));
       final tasksForDay = getTasksForDate(dateToCheck);
@@ -373,5 +386,19 @@ class TaskProvider extends ChangeNotifier {
     }
     _isLoading = false;
     notifyListeners();
+  }
+
+  String _generateRruleString() {
+    switch (_temporaryTask.repeat) {
+      case 'daily':
+        return 'RRULE:FREQ=DAILY';
+      case 'weekly':
+        return 'RRULE:FREQ=WEEKLY';
+      case 'monthly':
+        return 'RRULE:FREQ=MONTHLY';
+      case 'once':
+      default:
+        return '';
+    }
   }
 }

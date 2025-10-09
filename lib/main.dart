@@ -1,3 +1,4 @@
+import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'package:fazr/firebase_options.dart';
 import 'package:fazr/providers/completed_task_provider.dart';
 import 'package:fazr/providers/date_provider.dart';
@@ -12,6 +13,7 @@ import 'package:provider/provider.dart';
 
 void main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
+  await AndroidAlarmManager.initialize();
   await dotenv.load(fileName: ".env");
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const App());
@@ -28,7 +30,7 @@ class App extends StatelessWidget {
         ChangeNotifierProvider(create: (ctx) => DateProvider()),
         ChangeNotifierProvider(create: (ctx) => CompletedTaskProvider()),
         ChangeNotifierProvider(create: (ctx) => UserProvider()),
-        ChangeNotifierProvider(create: (ctx) => HistoryProvider() ),
+        ChangeNotifierProvider(create: (ctx) => HistoryProvider()),
       ],
       child: MaterialApp(
         theme: ThemeData(

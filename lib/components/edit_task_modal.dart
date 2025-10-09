@@ -69,7 +69,7 @@ class _EditTaskModalState extends State<EditTaskModal> {
     });
 
     try {
-      await taskProvider.updateTask(widget.task.uid!);
+      await taskProvider.updateTask(context, widget.task.uid!);
 
       if (mounted) {
         Navigator.pop(context);

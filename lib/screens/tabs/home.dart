@@ -6,6 +6,7 @@ import 'package:fazr/models/task_model.dart';
 import 'package:fazr/providers/date_provider.dart';
 import 'package:fazr/providers/task_provider.dart';
 import 'package:fazr/providers/completed_task_provider.dart';
+import 'package:fazr/utils/request_permissions.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -33,6 +34,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
         setState(() {});
       }
     });
+    requestPermissions();
   }
 
   @override
