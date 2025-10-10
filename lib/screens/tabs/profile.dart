@@ -148,29 +148,60 @@ class _ProfileState extends State<Profile> {
                 ),
                 GestureDetector(
                   onTap: _isUploading ? null : handleAvatarTap,
-                  child: CircleAvatar(
-                    radius: 40,
-                    backgroundColor: colors.primary.withValues(alpha: 0.3),
-                    backgroundImage:
-                        (user.avatar != null && user.avatar!.isNotEmpty)
-                        ? CachedNetworkImageProvider(user.avatar!)
-                        : null,
-                    child: _isUploading
-                        ? const CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2.0,
-                          )
-                        : (user.avatar == null || user.avatar!.isEmpty)
-                        ? Text(
-                            user.fullname.isNotEmpty
-                                ? user.fullname[0].toUpperCase()
-                                : '?',
-                            style: const TextStyle(
-                              fontSize: 24,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      CircleAvatar(
+                        radius: 40,
+                        backgroundColor: colors.primary.withAlpha(70),
+                        child: (user.avatar != null && user.avatar!.isNotEmpty)
+                            ? ClipOval(
+                                child: CachedNetworkImage(
+                                  imageUrl: user.avatar!,
+                                  width: 80,
+                                  height: 80,
+                                  fit: BoxFit.cover,
+                                  placeholder: (context, url) => Center(
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2.0,
+                                      color: colors.primary,
+                                    ),
+                                  ),
+                                  errorWidget: (context, url, error) =>
+                                      const Icon(
+                                        Icons.person,
+                                        color: Colors.white,
+                                        size: 40,
+                                      ),
+                                ),
+                              )
+                            : Text(
+                                user.fullname.isNotEmpty
+                                    ? user.fullname[0].toUpperCase()
+                                    : '?',
+                                style: const TextStyle(
+                                  fontSize: 24,
+                                  color: Colors.white,
+                                ),
+                              ),
+                      ),
+
+                      if (_isUploading)
+                        Container(
+                          width: 80,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.black.withValues(alpha: .5),
+                          ),
+                          child: const Center(
+                            child: CircularProgressIndicator(
                               color: Colors.white,
+                              strokeWidth: 2.0,
                             ),
-                          )
-                        : null,
+                          ),
+                        ),
+                    ],
                   ),
                 ),
               ],
