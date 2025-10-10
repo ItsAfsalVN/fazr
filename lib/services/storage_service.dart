@@ -132,11 +132,9 @@ Future<String?> getAvatarUrlFromGitHub(String userId) async {
       for (final file in files) {
         if (file is Map<String, dynamic> && file['name']?.startsWith(userId) == true) {
           final downloadUrl = file['download_url'];
-          print('✅ Found GitHub avatar for $userId: $downloadUrl');
-          return downloadUrl; // Return the URL as soon as it's found
+          return downloadUrl; 
         }
       }
-      print('ℹ️ No avatar found on GitHub for user $userId.');
       return null;
     } else {
       print('❌ Could not list avatars from GitHub. Status: ${response.statusCode}');

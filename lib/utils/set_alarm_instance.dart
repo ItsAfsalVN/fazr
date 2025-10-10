@@ -1,4 +1,5 @@
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
+import 'package:fazr/services/notification_service.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:rrule/rrule.dart';
@@ -7,21 +8,19 @@ import 'package:fazr/models/task_model.dart';
 @pragma('vm:entry-point')
 void alarmCallback(int id, Map<String, dynamic> params) async {
   WidgetsFlutterBinding.ensureInitialized();
-  try {
+  if (Firebase.apps.isEmpty) {
     await Firebase.initializeApp();
-
-    final taskId = params['taskId'] as String?;
-    final alertType = params['alertType'] as String?;
-
-    print("Task ID: $taskId, Alert Type: $alertType");
-  } catch (e) {
-    print("Error in alarm callback: $e");
   }
+  await NotificationService().initNotifications();
+  final String title = params['title'] as String;
+  final String body = params['body'] as String;
+  NotificationService().showNotification(title: title, body: body);
+  print("Notification shown: $title - $body");
 }
 
 Future<void> scheduleNextTaskAlarm(TaskModel task) async {
   final int startAlarmId = task.uid!.hashCode;
-  final int endAlarmId = (task.uid! + '_end').hashCode;
+  final int endAlarmId = ('${task.uid!}_end').hashCode;
 
   await AndroidAlarmManager.cancel(startAlarmId);
   await AndroidAlarmManager.cancel(endAlarmId);
@@ -32,7 +31,6 @@ Future<void> scheduleNextTaskAlarm(TaskModel task) async {
   }
 
   final recurrenceRule = RecurrenceRule.fromString(task.rrule);
-
   final DateTime originalStartDateLocal = DateTime(
     task.startingDate.year,
     task.startingDate.month,
@@ -41,15 +39,12 @@ Future<void> scheduleNextTaskAlarm(TaskModel task) async {
     task.startTime.minute,
   );
 
-  final DateTime originalStartDateAsUtc = originalStartDateLocal.toUtc();
-
   final allInstances = recurrenceRule.getInstances(
-    start: originalStartDateAsUtc,
+    start: originalStartDateLocal.toUtc(),
   );
 
-  final now = DateTime.now();
   final futureInstances = allInstances.where(
-    (instance) => instance.toLocal().isAfter(now),
+    (instance) => instance.toLocal().isAfter(DateTime.now()),
   );
 
   if (futureInstances.isEmpty) {
@@ -60,20 +55,23 @@ Future<void> scheduleNextTaskAlarm(TaskModel task) async {
   final DateTime nextStartTimeLocal = futureInstances.first.toLocal();
 
   if (task.alertAtStart) {
-    final success = await AndroidAlarmManager.oneShotAt(
+    print("Scheduling START alarm for '${task.title}' at $nextStartTimeLocal");
+    await AndroidAlarmManager.oneShotAt(
       nextStartTimeLocal,
       startAlarmId,
       alarmCallback,
       exact: true,
       wakeup: true,
       rescheduleOnReboot: true,
-      params: {'taskId': task.uid!, 'alertType': 'start'},
+      params: {
+        'title': task.title,
+        'body': 'Your task "${task.title}" is starting now.',
+      },
     );
-    print("Alarm scheduled: $success");
   }
 
   if (task.alertAtEnd) {
-    final DateTime nextEndTimeLocal = DateTime(
+    DateTime nextEndTimeLocal = DateTime(
       nextStartTimeLocal.year,
       nextStartTimeLocal.month,
       nextStartTimeLocal.day,
@@ -81,17 +79,27 @@ Future<void> scheduleNextTaskAlarm(TaskModel task) async {
       task.endTime.minute,
     );
 
-    if (nextEndTimeLocal.isAfter(nextStartTimeLocal)) {
-      final success = await AndroidAlarmManager.oneShotAt(
+    final startTimeInMinutes = task.startTime.hour * 60 + task.startTime.minute;
+    final endTimeInMinutes = task.endTime.hour * 60 + task.endTime.minute;
+
+    if (endTimeInMinutes <= startTimeInMinutes) {
+      nextEndTimeLocal = nextEndTimeLocal.add(const Duration(days: 1));
+    }
+
+    if (nextEndTimeLocal.isAfter(DateTime.now())) {
+      print("Scheduling END alarm for '${task.title}' at $nextEndTimeLocal");
+      await AndroidAlarmManager.oneShotAt(
         nextEndTimeLocal,
         endAlarmId,
         alarmCallback,
         exact: true,
         wakeup: true,
         rescheduleOnReboot: true,
-        params: {'taskId': task.uid!, 'alertType': 'end'},
+        params: {
+          'title': task.title,
+          'body': 'Your task "${task.title}" has ended.',
+        },
       );
-      print("End alarm scheduled: $success");
     }
   }
 }
