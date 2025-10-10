@@ -36,14 +36,41 @@ Future<void> updateTaskInFireStore(
 
 Future<void> deleteTaskFromFireStore(String taskId) async {
   try {
-    await db.collection('tasks').doc(taskId).delete();
+    final batch = db.batch();
+
+    final taskRef = db.collection('tasks').doc(taskId);
+
+    final completedTasksSnapshot = await db
+        .collection('completed_tasks')
+        .where('taskId', isEqualTo: taskId)
+        .get();
+
+    for (final doc in completedTasksSnapshot.docs) {
+      batch.delete(doc.reference);
+    }
+
+    final historySnapshot = await db
+        .collection('task_history')
+        .where('taskId', isEqualTo: taskId)
+        .get();
+
+    for (final doc in historySnapshot.docs) {
+      batch.delete(doc.reference);
+    }
+
+    batch.delete(taskRef);
+
+    await batch.commit();
   } catch (e) {
-    throw Exception("Error deleting task: $e");
+    throw Exception("Error deleting task and its related data: $e");
   }
 }
 
-Future<void> addCompletedTaskInFireStore(String taskId, DateTime date, String userId) async {
-
+Future<void> addCompletedTaskInFireStore(
+  String taskId,
+  DateTime date,
+  String userId,
+) async {
   final normalizedDate = DateTime(date.year, date.month, date.day);
   final docId = '${taskId}_${normalizedDate.toIso8601String().split('T')[0]}';
 
@@ -51,7 +78,7 @@ Future<void> addCompletedTaskInFireStore(String taskId, DateTime date, String us
     await db.collection('completed_tasks').doc(docId).set({
       'taskId': taskId,
       'completedDate': Timestamp.fromDate(normalizedDate),
-      'userId': userId
+      'userId': userId,
     });
   } catch (e) {
     throw Exception("Failed to add completed task: $e");
@@ -85,7 +112,10 @@ Future<void> deleteInstanceInFireStore(String taskId, DateTime date) async {
 
 Future<QuerySnapshot> fetchCompletedTasksFromFireStore(String userId) async {
   try {
-    return await db.collection('completed_tasks').where('userId', isEqualTo: userId).get();
+    return await db
+        .collection('completed_tasks')
+        .where('userId', isEqualTo: userId)
+        .get();
   } catch (e) {
     throw Exception("Error fetching completed tasks: $e");
   }
@@ -124,7 +154,10 @@ Future<UserModel?> getUserFromFireStore(String uid) async {
 
 Future<QuerySnapshot> fetchHistoryFromFirestore(String userId) async {
   try {
-    return await db.collection('task_history').where('userId',isEqualTo: userId).get();
+    return await db
+        .collection('task_history')
+        .where('userId', isEqualTo: userId)
+        .get();
   } catch (e) {
     throw Exception("Error fetching task history: $e");
   }
@@ -150,7 +183,7 @@ Future<void> createHistoryRecordInFirestore({
   required String taskTitle,
   required DateTime instanceDate,
   required String status,
-  required String userId
+  required String userId,
 }) async {
   try {
     await db.collection('task_history').add({
@@ -158,14 +191,18 @@ Future<void> createHistoryRecordInFirestore({
       'taskTitle': taskTitle,
       'instanceDate': Timestamp.fromDate(instanceDate),
       'status': status,
-      'userId' : userId
+      'userId': userId,
     });
   } catch (e) {
     throw Exception("Failed to create history record: $e");
   }
 }
 
-Future<bool> doesHistoryRecordExist(String taskId, DateTime date, String userId) async {
+Future<bool> doesHistoryRecordExist(
+  String taskId,
+  DateTime date,
+  String userId,
+) async {
   final normalizedDate = DateTime(date.year, date.month, date.day);
 
   try {
@@ -173,7 +210,7 @@ Future<bool> doesHistoryRecordExist(String taskId, DateTime date, String userId)
         .collection('task_history')
         .where('taskId', isEqualTo: taskId)
         .where('instanceDate', isEqualTo: Timestamp.fromDate(normalizedDate))
-        .where('userId', isEqualTo:  userId)
+        .where('userId', isEqualTo: userId)
         .limit(1)
         .get();
 
@@ -189,7 +226,7 @@ Future<void> createOrUpdateHistoryRecord({
   required String taskTitle,
   required DateTime instanceDate,
   required String status,
-  required String userId
+  required String userId,
 }) async {
   final normalizedDate = DateTime(
     instanceDate.year,
@@ -216,7 +253,7 @@ Future<void> createOrUpdateHistoryRecord({
         'taskTitle': taskTitle,
         'instanceDate': Timestamp.fromDate(normalizedDate),
         'status': status,
-        'userId': userId
+        'userId': userId,
       });
       print('Created history record for $taskId with status "$status"');
     }
