@@ -26,8 +26,8 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<TaskProvider>().fetchAllTasks();
-      context.read<CompletedTaskProvider>().fetchCompletedTasks();
+      context.read<TaskProvider>().fetchAllTasks(context);
+      context.read<CompletedTaskProvider>().fetchCompletedTasks(context);
     });
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (mounted) {
@@ -47,8 +47,8 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      context.read<TaskProvider>().fetchAllTasks();
-      context.read<CompletedTaskProvider>().fetchCompletedTasks();
+      context.read<TaskProvider>().fetchAllTasks(context);
+      context.read<CompletedTaskProvider>().fetchCompletedTasks(context);
     }
   }
 

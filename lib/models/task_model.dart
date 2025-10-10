@@ -13,6 +13,8 @@ class TaskModel {
   final String repeat;
   final List<String>? deletedInstances; 
   final String rrule;
+  final String userId;
+
 
   TaskModel({
     this.uid,
@@ -25,6 +27,7 @@ class TaskModel {
     required this.alertAtEnd,
     required this.repeat,
     required this.rrule,
+    required this.userId,
     this.deletedInstances,
   });
 
@@ -48,6 +51,7 @@ class TaskModel {
       alertAtEnd: data['alertAtEnd'] as bool,
       repeat: data['repeat'] as String,
       rrule: data['rrule'] as String,
+      userId: data['userId'] as String,
       deletedInstances: data['deletedInstances'] != null
           ? List<String>.from(data['deletedInstances'])
           : null,
@@ -65,6 +69,7 @@ class TaskModel {
       'alertAtEnd': alertAtEnd,
       'repeat': repeat,
       'rrule' : rrule,
+      'userId' : userId,
       'deletedInstances': deletedInstances ?? [],
     };
   }
@@ -80,6 +85,7 @@ class TaskModel {
     bool? alertAtEnd,
     String? repeat,
     String? rrule,
+    String? userId,
     List<String>? deletedInstances,
   }) {
     return TaskModel(
@@ -93,6 +99,7 @@ class TaskModel {
       alertAtEnd: alertAtEnd ?? this.alertAtEnd,
       repeat: repeat ?? this.repeat,
       rrule: rrule ?? this.rrule,
+      userId: userId ?? this.userId,
       deletedInstances: deletedInstances ?? this.deletedInstances,
     );
   }

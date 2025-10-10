@@ -24,8 +24,9 @@ class _HistoryState extends State<History> {
 
       await taskProvider.generateMissingHistory(
         completedProvider.completedTasks,
+        context
       );
-      await historyProvider.fetchHistory();
+      await historyProvider.fetchHistory(context);
     });
   }
 
@@ -51,7 +52,7 @@ class _HistoryState extends State<History> {
     );
 
     if (confirm == true && mounted) {
-      await context.read<HistoryProvider>().clearHistory();
+      await context.read<HistoryProvider>().clearHistory(context);
     }
   }
 

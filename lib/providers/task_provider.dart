@@ -1,8 +1,10 @@
 import 'package:fazr/models/completed_task_model.dart';
 import 'package:fazr/models/task_model.dart';
 import 'package:fazr/providers/completed_task_provider.dart';
+import 'package:fazr/providers/user_provider.dart';
 import 'package:fazr/utils/set_alarm_instance.dart';
 import 'package:flutter/material.dart';
+import 'package:path/path.dart';
 import 'package:provider/provider.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../services/database_services.dart';
@@ -22,6 +24,7 @@ class TaskProvider extends ChangeNotifier {
     alertAtEnd: false,
     repeat: "once",
     rrule: "",
+    userId: "",
   );
 
   CalendarFormat _calendarFormat = CalendarFormat.month;
@@ -104,9 +107,18 @@ class TaskProvider extends ChangeNotifier {
   Future<void> createTask(BuildContext context) async {
     _isLoading = true;
     notifyListeners();
+
+    final userId = Provider.of<UserProvider>(context, listen: false).user?.id;
+    if (userId == null) {
+      throw Exception('User not logged in');
+    }
+
     try {
       final rruleString = _generateRruleString();
-      _temporaryTask = _temporaryTask.copyWith(rrule: rruleString);
+      _temporaryTask = _temporaryTask.copyWith(
+        rrule: rruleString,
+        userId: userId,
+      );
 
       final jsonTask = _temporaryTask.toJson();
       final taskId = await createTaskInFireStore(jsonTask);
@@ -125,6 +137,7 @@ class TaskProvider extends ChangeNotifier {
         alertAtEnd: false,
         repeat: "once",
         rrule: '',
+        userId: '',
       );
     } catch (e) {
       print(e);
@@ -135,11 +148,20 @@ class TaskProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> fetchAllTasks() async {
+  Future<void> fetchAllTasks(BuildContext context) async {
     _isLoading = true;
     notifyListeners();
+
+    final userId = Provider.of<UserProvider>(context, listen: false).user?.id;
+    if (userId == null) {
+      _tasks = []; 
+      _isLoading = false;
+      notifyListeners();
+      return;
+    }
+
     try {
-      final querySnapshot = await fetchAllTasksFromFireStore();
+      final querySnapshot = await fetchAllTasksFromFireStore(userId);
       _tasks = querySnapshot.docs.map((doc) {
         return TaskModel.fromJson(doc.id, doc.data() as Map<String, dynamic>);
       }).toList();
@@ -214,6 +236,10 @@ class TaskProvider extends ChangeNotifier {
       context,
       listen: false,
     );
+
+    final userId = Provider.of<UserProvider>(context, listen: false).user?.id;
+    if (userId == null) throw Exception("User not found");
+
     final task = _tasks.firstWhere(
       (t) => t.uid == taskId,
       orElse: () => _temporaryTask,
@@ -221,9 +247,9 @@ class TaskProvider extends ChangeNotifier {
 
     try {
       if (isCompleted) {
-        await addCompletedTaskInFireStore(taskId, date);
+        await addCompletedTaskInFireStore(taskId, date, userId);
         completedTaskProvider.addCompletedTask(
-          CompletedTask(taskId: taskId, completedDate: date),
+          CompletedTask(taskId: taskId, completedDate: date, userId: userId),
         );
 
         await createOrUpdateHistoryRecord(
@@ -231,7 +257,9 @@ class TaskProvider extends ChangeNotifier {
           taskTitle: task.title,
           instanceDate: date,
           status: 'completed',
+          userId: userId
         );
+
       } else {
         await deleteCompletedTaskFromFireStore(taskId, date);
         completedTaskProvider.removeCompletedTask(taskId, date);
@@ -241,7 +269,9 @@ class TaskProvider extends ChangeNotifier {
           taskTitle: task.title,
           instanceDate: date,
           status: 'missed',
+          userId: userId
         );
+
       }
     } catch (e) {
       rethrow;
@@ -275,6 +305,7 @@ class TaskProvider extends ChangeNotifier {
         alertAtEnd: false,
         repeat: "once",
         rrule: "",
+        userId: ''
       );
     } catch (e) {
       rethrow;
@@ -322,10 +353,19 @@ class TaskProvider extends ChangeNotifier {
 
   Future<void> generateMissingHistory(
     List<CompletedTask> completedTasks,
+    BuildContext context
   ) async {
     print("Generating missing history...");
     _isLoading = true;
     notifyListeners();
+
+    final userId = Provider.of<UserProvider>(context, listen: false).user?.id;
+    if (userId == null) {
+      print("User not logged in, cannot generate history.");
+      _isLoading = false;
+      notifyListeners();
+      return;
+    }
 
     final today = DateTime.now();
     final yesterday = DateTime(
@@ -359,6 +399,7 @@ class TaskProvider extends ChangeNotifier {
         bool recordExists = await doesHistoryRecordExist(
           task.uid!,
           dateToCheck,
+          userId
         );
 
         if (!recordExists) {
@@ -380,6 +421,7 @@ class TaskProvider extends ChangeNotifier {
             taskTitle: task.title,
             instanceDate: dateToCheck,
             status: status,
+            userId: userId
           );
         }
       }
