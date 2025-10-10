@@ -15,10 +15,10 @@ class _DashboardState extends State<Dashboard> {
   int _selectedIndex = 1;
 
   static final List<Widget> _screens = <Widget>[
-    History(),
-    Home(),
+    const History(),
+    const Home(),
     Create(),
-    Profile(),
+    const Profile(),
   ];
 
   final List<Map<String, dynamic>> _navItems = [
@@ -39,15 +39,15 @@ class _DashboardState extends State<Dashboard> {
           color: Colors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: .1),
+              color: Colors.black.withAlpha(25),
               blurRadius: 10,
-              offset: Offset(0, -2),
+              offset: const Offset(0, -2),
             ),
           ],
         ),
         child: SafeArea(
           child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: _navItems.asMap().entries.map((entry) {
@@ -55,40 +55,64 @@ class _DashboardState extends State<Dashboard> {
                 Map<String, dynamic> item = entry.value;
                 bool isSelected = index == _selectedIndex;
 
+                final double unselectedWidth = 50;
+                final double selectedWidth = 115;
+
                 return GestureDetector(
                   onTap: () {
                     setState(() {
                       _selectedIndex = index;
                     });
                   },
-                  child: AnimatedContainer(
-                    duration: Duration(milliseconds: 200),
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: isSelected ? colors.primary : Colors.transparent,
-                      borderRadius: BorderRadius.circular(30),
+                  child: TweenAnimationBuilder<double>(
+                    tween: Tween(
+                      end: isSelected ? selectedWidth : unselectedWidth,
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          item['icon'],
-                          color: isSelected ? Colors.white : colors.primary,
-                          size: 28,
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                    builder: (context, widthValue, child) {
+                      return AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        width: widthValue,
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? colors.primary
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(30),
                         ),
-                        if (isSelected) ...[
-                          SizedBox(width: 8),
-                          Text(
-                            item['label'],
-                            style: TextStyle(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              item['icon'],
                               color: isSelected ? Colors.white : colors.primary,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
+                              size: 28,
                             ),
-                          ),
-                        ],
-                      ],
-                    ),
+                            if (isSelected)
+                              Flexible(
+                                child: Padding(
+                                  padding: const EdgeInsets.only(left: 8),
+                                  child: AnimatedOpacity(
+                                    opacity: isSelected ? 1.0 : 0.0,
+                                    duration: const Duration(milliseconds: 250),
+                                    child: Text(
+                                      item['label'],
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.clip,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      );
+                    },
                   ),
                 );
               }).toList(),
