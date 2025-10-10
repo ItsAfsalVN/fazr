@@ -34,7 +34,7 @@ class _DashboardState extends State<Dashboard> {
     return Scaffold(
       body: _screens[_selectedIndex],
       bottomNavigationBar: Container(
-        height: 80,
+        height: 65,
         decoration: BoxDecoration(
           color: Colors.white,
           boxShadow: [
@@ -47,7 +47,7 @@ class _DashboardState extends State<Dashboard> {
         ),
         child: SafeArea(
           child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: _navItems.asMap().entries.map((entry) {
